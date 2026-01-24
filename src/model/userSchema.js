@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const chatSchema = new mongoose.Schema({
     message: { type: String },
     sender: { type: String },
-    receiver: { type: String },
+    astroResponse: { type: String },
     timestamp: { type: Date, default: Date.now }
 })
 

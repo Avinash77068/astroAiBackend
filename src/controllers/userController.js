@@ -1,5 +1,5 @@
 const User = require("../model/userSchema");
-
+const { getAiChatResponse } = require("../middleware/AiChatResponse");
 // In-memory OTP storage (use Redis in production)
 const otpStore = new Map();
 
@@ -123,6 +123,7 @@ const getAllUsers = async (req, res) => {
         });
     }
 };
+
 const getUserById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -238,19 +239,63 @@ const deleteUser = async (req, res) => {
         });
     }
 };
-const createChat = async (req, res) => {
-    const { userId, message } = req.body;
-    const user = await User.findById(userId);
-    user.chat.push({
-        message,
-        sender: "user",
-        timestamp: new Date()
-    })
-    await user.save();
-    return res.json({
-        success: true,
-        message: "Chat created successfully"
-    })
+const chatResponse = async (req, res) => {
+    try {
+        const { userId, message } = req.body;
+
+        if (!userId || !message) {
+            return res.status(400).json({
+                success: false,
+                message: "userId and message are required"
+            });
+        }
+
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        const userDetails = {
+            name: user.name,
+            dateOfBirth: user.dateOfBirth,
+            place: user.place,
+            gender: user.gender,
+            phoneNumber: user.phoneNumber
+        };
+        
+        const astroResponse = await getAiChatResponse(message, user.chat, userDetails);
+
+        user.chat.push({
+            message: message,
+            sender: "user",
+            astroResponse: astroResponse,
+            timestamp: new Date()
+        });
+
+        await user.save();
+
+        return res.json({
+            success: true,
+            message: "Chat created successfully",
+            data: {
+                message: message,
+                sender: "user",
+                astroResponse: astroResponse,
+                timestamp: user.chat[user.chat.length - 1].timestamp,
+                _id: user.chat[user.chat.length - 1]._id
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Error creating chat",
+            error: error.message
+        });
+    }
 }
 
 module.exports = {
@@ -261,5 +306,5 @@ module.exports = {
     sendOTP,
     verifyOTP,
     getUserById,
-    createChat
+    chatResponse
 };
