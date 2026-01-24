@@ -95,6 +95,7 @@ const verifyOTP = async (req, res) => {
             success: true,
             data: {
                 token: "jwt-token-" + user._id,
+                name: user.name,
                 userId: user._id,
                 isNewUser: !user.name
             },
