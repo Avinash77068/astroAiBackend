@@ -1,5 +1,12 @@
 const mongoose = require("mongoose");
 
+const chatSchema = new mongoose.Schema({
+    message: { type: String },
+    sender: { type: String },
+    receiver: { type: String },
+    timestamp: { type: Date, default: Date.now }
+})
+
 const userSchema = new mongoose.Schema({
     phoneNumber: { type: String, unique: true, sparse: true },
     name: { type: String, default: "" },
@@ -8,6 +15,7 @@ const userSchema = new mongoose.Schema({
     gender: { type: String, default: "" },
     email: { type: String },
     password: { type: String },
+    chat: [chatSchema],
 }, {
     timestamps: true
 });

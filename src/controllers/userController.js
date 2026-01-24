@@ -238,6 +238,20 @@ const deleteUser = async (req, res) => {
         });
     }
 };
+const createChat = async (req, res) => {
+    const { userId, message } = req.body;
+    const user = await User.findById(userId);
+    user.chat.push({
+        message,
+        sender: "user",
+        timestamp: new Date()
+    })
+    await user.save();
+    return res.json({
+        success: true,
+        message: "Chat created successfully"
+    })
+}
 
 module.exports = {
     getAllUsers,
@@ -246,5 +260,6 @@ module.exports = {
     deleteUser,
     sendOTP,
     verifyOTP,
-    getUserById
+    getUserById,
+    createChat
 };
