@@ -2,7 +2,7 @@ const axios = require('axios');
 
 const getAiChatResponse = async (userMessage, chatHistory = [], userDetails = null) => {
     try {
-        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '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';
+        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
         let userContext = '';
         if (userDetails) {
@@ -57,9 +57,9 @@ ${userContext}
         });
 
         const response = await axios.post(
-            'https://openrouter.ai/api/v1/chat/completions',
+            process.env.OPENROUTER_SITE_URL,
             {
-                model: process.env.OPENROUTER_MODEL || "nvidia/nemotron-3-nano-30b-a3b:free",
+                model: process.env.OPENROUTER_MODEL,
                 messages: messages,
                 temperature: 0.7,
                 max_tokens: 500
