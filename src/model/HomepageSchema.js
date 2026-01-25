@@ -5,7 +5,8 @@ const aiOptionSchema = new mongoose.Schema(
     {
         image: { type: String, required: true },
         title: { type: String, required: true },
-        bgColor: { type: String, required: true }
+        bgColor: { type: String, required: true },
+        route: { type: String, required: false }
     },
     { _id: false }
 );
@@ -15,7 +16,8 @@ const quickActionSchema = new mongoose.Schema(
     {
         label: { type: String, required: true },
         iconKey: { type: String, required: true },
-        image: { type: String, required: true }
+        image: { type: String, required: true },
+        route: { type: String, required: false }
     },
     { _id: false }
 );
@@ -24,7 +26,8 @@ const quickActionSchema = new mongoose.Schema(
 const horoscopeItemSchema = new mongoose.Schema(
     {
         image: { type: String, required: true },
-        title: { type: String, required: true }
+        title: { type: String, required: true },
+        route: { type: String, required: false }
     },
     { _id: false }
 );
@@ -34,7 +37,8 @@ const reportSchema = new mongoose.Schema(
     {
         image: { type: String, required: true },
         title: { type: String, required: true },
-        price: { type: String }
+        price: { type: String },
+        route: { type: String, required: false }
     },
     { _id: false }
 );
@@ -43,7 +47,8 @@ const reportSchema = new mongoose.Schema(
 const panchangItemSchema = new mongoose.Schema(
     {
         image: { type: String, required: true },
-        title: { type: String, required: true }
+        title: { type: String, required: true },
+        route: { type: String, required: false }
     },
     { _id: false }
 );
@@ -52,7 +57,8 @@ const panchangItemSchema = new mongoose.Schema(
 const section2025ItemSchema = new mongoose.Schema(
     {
         image: { type: String, required: true },
-        title: { type: String, required: true }
+        title: { type: String, required: true },
+        route: { type: String, required: false }
     },
     { _id: false }
 );
@@ -83,7 +89,8 @@ const consultFilters = new mongoose.Schema(
     {
         label: { type: String, required: true },
         iconKey: { type: String, required: true },
-        image: { type: String, required: true }
+        image: { type: String, required: true },
+        route: { type: String, required: false } 
     },
     { _id: false }
 )
