@@ -1,57 +1,67 @@
 const User = require("../model/userSchema");
 const { getAiChatResponse } = require("../middleware/AiChatResponse");
+const sendSMS = require("../middleware/services/twilioService");
+const sendEmail = require("../middleware/services/emailService");
 // In-memory OTP storage (use Redis in production)
 const otpStore = new Map();
 
+
+
 const sendOTP = async (req, res) => {
     try {
-        const { phoneNumber } = req.body;
+        const { phoneNumber, email } = req.body;
 
-        if (!phoneNumber) {
+        if (!phoneNumber && !email) {
             return res.status(400).json({
                 success: false,
-                message: "Phone number is required"
+                message: "Phone number or email is required",
             });
         }
 
-        // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        
-        // Store OTP with 5 minute expiry
-        otpStore.set(phoneNumber, {
+
+        const key = phoneNumber || email;
+
+        otpStore.set(key, {
             otp,
-            expiresAt: Date.now() + 5 * 60 * 1000
+            expiresAt: Date.now() + 5 * 60 * 1000, // 5 min
         });
 
-        // TODO: Send OTP via SMS service (Twilio, AWS SNS, etc.)
-        console.log(`OTP for ${phoneNumber}: ${otp}`);
+        if (phoneNumber) {
+            await sendSMS(phoneNumber, otp);
+        } else {
+            await sendEmail(email, otp);
+        }
 
-        res.json({
+        res.status(200).json({
             success: true,
             message: "OTP sent successfully",
-            // Remove this in production - only for testing
-            data: { otp }
+            data: { otp },
+           
         });
     } catch (error) {
+        console.error(error);
         res.status(500).json({
             success: false,
-            message: error.message
+            message: "OTP sending failed",
         });
     }
 };
 
+
+
 const verifyOTP = async (req, res) => {
     try {
-        const { phoneNumber, otp } = req.body;
+        const { phoneNumber, otp, email } = req.body;
 
-        if (!phoneNumber || !otp) {
+        if ((!phoneNumber && !email) || !otp) {
             return res.status(400).json({
                 success: false,
-                message: "Phone number and OTP are required"
+                message: "Phone number or email and OTP are required"
             });
         }
 
-        const storedData = otpStore.get(phoneNumber);
+        const storedData = otpStore.get(phoneNumber || email);
 
         if (!storedData) {
             return res.status(400).json({
@@ -61,7 +71,7 @@ const verifyOTP = async (req, res) => {
         }
 
         if (Date.now() > storedData.expiresAt) {
-            otpStore.delete(phoneNumber);
+            otpStore.delete(phoneNumber || email);
             return res.status(400).json({
                 success: false,
                 message: "OTP expired"
@@ -76,19 +86,30 @@ const verifyOTP = async (req, res) => {
         }
 
         // OTP verified successfully
-        otpStore.delete(phoneNumber);
+        otpStore.delete(phoneNumber || email);
 
-        // Check if user exists with this phone number
-        let user = await User.findOne({ phoneNumber });
-        
-        if (!user) {
-            // Create a temporary user record
-            user = await User.create({
-                phoneNumber,
-                name: "",
-                dateOfBirth: "",
-                gender: ""
-            });
+        // Check if user exists
+        let user;
+        if (phoneNumber) {
+            user = await User.findOne({ phoneNumber });
+            if (!user) {
+                user = await User.create({
+                    phoneNumber,
+                    name: "",
+                    dateOfBirth: "",
+                    gender: ""
+                });
+            }
+        } else {
+            user = await User.findOne({ email });
+            if (!user) {
+                user = await User.create({
+                    email,
+                    name: "",
+                    dateOfBirth: "",
+                    gender: ""
+                });
+            }
         }
 
         res.json({
