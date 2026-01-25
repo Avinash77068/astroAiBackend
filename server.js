@@ -19,6 +19,6 @@ app.use("/api/homepage", homepageRoutes);
 app.use("/api/astrologer", astrologerRoutes);
 app.use("/api/user", userRoutesController);
 
-app.listen(3000, () => {
-    console.log("Server started on port http://localhost:3000");
-});
+// app.listen(3000, () => {
+//     console.log("Server started on port http://localhost:3000");
+// });
