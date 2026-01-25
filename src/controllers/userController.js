@@ -152,7 +152,7 @@ const getUserById = async (req, res) => {
 
 const createUser = async (req, res) => {
     try {
-        const { name, place, dateOfBirth, gender, phoneNumber } = req.body;
+        const { name, place, dateOfBirth, gender, phoneNumber,email } = req.body;
 
         if (!name || !dateOfBirth || !gender) {
             return res.status(400).json({
@@ -170,7 +170,16 @@ const createUser = async (req, res) => {
                 { name, place, dateOfBirth, gender },
                 { new: true, upsert: true }
             );
-        } else {
+
+        }
+        else if(email) {
+            user = await User.findOneAndUpdate(
+                { email },
+                { name, place, dateOfBirth, gender },
+                { new: true, upsert: true }
+            );
+        }
+        else {
             // Create new user without phone number
             user = await User.create({
                 name,
