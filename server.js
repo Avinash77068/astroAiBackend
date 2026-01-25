@@ -14,7 +14,6 @@ app.use(express.urlencoded({ extended: true }));
 
 connectDB();
 
-// Routes
 app.use("/api/homepage", homepageRoutes);
 app.use("/api/astrologer", astrologerRoutes);
 app.use("/api/user", userRoutesController);
