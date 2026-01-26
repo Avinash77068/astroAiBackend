@@ -121,7 +121,8 @@ const verifyOTP = async (req, res) => {
                 token: "jwt-token-" + user._id,
                 name: user.name,
                 userId: user._id,
-                isNewUser: !user.name
+                isNewUser: !user.name,
+                user: user
             },
             message: "OTP verified successfully"
         });
