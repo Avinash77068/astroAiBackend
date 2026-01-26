@@ -3,7 +3,17 @@ const path = require('path');
 
 class Logger {
     constructor() {
-        this.logsDir = path.join(__dirname, '../../logs');
+        // In serverless environments (Vercel, Lambda), use /tmp or disable file logging
+        if (process.env.NODE_ENV === 'production' || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+            // Serverless environment - use /tmp for logs or disable file logging
+            this.logsDir = '/tmp/logs';
+            this.fileLoggingEnabled = true;
+        } else {
+            // Local/development environment
+            this.logsDir = path.join(__dirname, '../../logs');
+            this.fileLoggingEnabled = true;
+        }
+        
         this.ensureLogsDirectory();
     }
 
@@ -29,10 +39,14 @@ class Logger {
     }
 
     writeToFile(filename, content) {
+        if (!this.fileLoggingEnabled) return;
+        
         try {
             fs.appendFileSync(filename, content);
         } catch (error) {
-            console.error('Failed to write to log file:', error);
+            // Silently fail file logging in serverless environments
+            // Console logging will still work
+            console.warn('File logging failed:', error.message);
         }
     }
 
@@ -45,11 +59,10 @@ class Logger {
     }
 
     error(message, meta = {}) {
-        if (['test', 'development'].includes(process.env.NODE_ENV)) {
-            const formatted = this.formatMessage('ERROR', message, meta);
-            console.error(`\x1b[31m${formatted}\x1b[0m`);
-            this.writeToFile(this.getLogFileName('error'), formatted);
-        }
+        // Always log errors, even in production
+        const formatted = this.formatMessage('ERROR', message, meta);
+        console.error(`\x1b[31m${formatted}\x1b[0m`);
+        this.writeToFile(this.getLogFileName('error'), formatted);
     }
 
     warn(message, meta = {}) {
