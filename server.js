@@ -48,10 +48,4 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
     console.log(`Server started on port http://localhost:${PORT}`);
-    console.log('Available routes:', {
-        homepage: '/api/homepage',
-        astrologer: '/api/astrologer',
-        user: '/api/user',
-        health: '/health'
-    });
 });
