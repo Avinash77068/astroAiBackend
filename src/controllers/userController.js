@@ -4,11 +4,13 @@ const sendSMS = require("../middleware/services/twilioService");
 const sendEmail = require("../middleware/services/emailService");
 // In-memory OTP storage (use Redis in production)
 const otpStore = new Map();
+const connectDB = require("../database/db");
 
 
 
 const sendOTP = async (req, res) => {
     try {
+        await connectDB();
         const { phoneNumber, email } = req.body;
 
         if (!phoneNumber && !email) {
@@ -50,6 +52,7 @@ const sendOTP = async (req, res) => {
 
 const verifyOTP = async (req, res) => {
     try {
+        await connectDB();
         const { phoneNumber, otp, email } = req.body;
 
         if ((!phoneNumber && !email) || !otp) {
@@ -129,6 +132,7 @@ const verifyOTP = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
     try {
+        await connectDB();
         const users = await User.find();
         res.json({
             success: true,
@@ -145,6 +149,7 @@ const getAllUsers = async (req, res) => {
 
 const getUserById = async (req, res) => {
     try {
+        await connectDB();
         const { id } = req.params;
         const user = await User.findById(id);
         
@@ -170,6 +175,7 @@ const getUserById = async (req, res) => {
 
 const createUser = async (req, res) => {
     try {
+        await connectDB();
         const { name, place, dateOfBirth, gender, phoneNumber,email } = req.body;
 
         if (!name || !dateOfBirth || !gender) {
@@ -226,6 +232,7 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     try {
+        await connectDB();
         const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!user) {
             return res.status(404).json({
@@ -248,6 +255,7 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
     try {
+        await connectDB();
         const user = await User.findByIdAndDelete(req.params.id);
         if (!user) {
             return res.status(404).json({
@@ -269,6 +277,7 @@ const deleteUser = async (req, res) => {
 };
 const chatResponse = async (req, res) => {
     try {
+        await connectDB();
         const { userId, message } = req.body;
 
         if (!userId || !message) {

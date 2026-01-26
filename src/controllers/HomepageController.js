@@ -1,7 +1,9 @@
+const connectDB = require("../database/db");
 const Home = require("../model/HomepageSchema");
 
 const getHomepageData = async (req, res) => {
     try {
+        await connectDB();
         const homeData = await Home.findOne();
 
         res.status(200).json({
@@ -21,6 +23,7 @@ const getHomepageData = async (req, res) => {
 
 const createHomepageData = async (req, res) => {
     try {
+        await connectDB();
         const homeData = await Home.findOneAndUpdate(
             {},
             {

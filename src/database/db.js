@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-dotenv.config();
+require("dotenv").config();
+
 const MONGO_URL = process.env.MONGO_URL;
 
 if (!MONGO_URL) {
-    throw new Error("❌ MONGO_URL not found in environment variables");
+    throw new Error("❌ MONGO_URL not found in env");
 }
 
 let cached = global.mongoose;
@@ -20,20 +20,12 @@ const connectDB = async () => {
 
     if (!cached.promise) {
         cached.promise = mongoose.connect(MONGO_URL, {
-            bufferCommands: false,
-            serverSelectionTimeoutMS: 5000,
+            serverSelectionTimeoutMS: 10000,
         });
     }
 
-    try {
-        cached.conn = await cached.promise;
-        console.log("✅ MongoDB connected successfully");
-    } catch (error) {
-        cached.promise = null;
-        console.error("❌ MongoDB connection error:", error.message);
-        throw error;
-    }
-
+    cached.conn = await cached.promise;
+    console.log("✅ MongoDB connected");
     return cached.conn;
 };
 

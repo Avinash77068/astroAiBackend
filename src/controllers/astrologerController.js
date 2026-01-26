@@ -1,7 +1,9 @@
 const Astrologer = require("../model/astrologerSchema.js");
+const connectDB = require("../database/db");
 
 const getAstrologerData = async (req, res) => {
     try {
+        await connectDB();
         const astrologerData = await Astrologer.find();
 
         res.status(200).json({
@@ -20,6 +22,7 @@ const getAstrologerData = async (req, res) => {
 
 const createAstrologerData = async (req, res) => {
     try {
+        await connectDB();
         await Astrologer.insertMany([
         {
             name: "Rrupa",
