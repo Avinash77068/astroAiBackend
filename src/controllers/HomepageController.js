@@ -1,14 +1,24 @@
-const Home = require("../model/HomepageSchema");;
+const Home = require("../model/HomepageSchema");
+const logger = require("../utils/logger");
+
 const getHomepageData = async (req, res) => {
     try {
+        logger.info('Homepage data request');
+
         const homeData = await Home.findOne();
-        
+
+        logger.success('Homepage data fetched successfully');
+        logger.database('FIND', 'homepage');
+
         res.status(200).json({
             success: true,
             data: homeData,
             message: "Home data fetched successfully"
         });
     } catch (error) {
+        logger.error('Error fetching homepage data', {
+            error: error.message
+        });
         res.status(500).json({
             success: false,
             message: "Error fetching home data",
@@ -20,6 +30,8 @@ const getHomepageData = async (req, res) => {
 
 const createHomepageData = async (req, res) => {
     try {
+        logger.info('Creating/updating homepage data');
+
         const homeData = await Home.findOneAndUpdate(
             {},
             {
@@ -225,12 +237,18 @@ const createHomepageData = async (req, res) => {
             { upsert: true, new: true }
         );
 
+        logger.success('Homepage data created/updated successfully');
+        logger.database('UPSERT', 'homepage');
+
         res.status(200).json({
             success: true,
             message: "Home data saved successfully",
             data: homeData
         });
     } catch (error) {
+        logger.error('Error creating homepage data', {
+            error: error.message
+        });
         res.status(500).json({
             success: false,
             message: "Something went wrong",

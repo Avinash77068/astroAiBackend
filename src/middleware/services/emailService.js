@@ -1,13 +1,16 @@
 const nodemailer = require("nodemailer");
+const logger = require("../../utils/logger");
 
 const sendEmail = async (email, otp) => {
     try {
         // Check if email credentials are configured
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+            logger.warn('Email credentials not configured - OTP logged to console');
             console.log(`📧 Email OTP for ${email}: ${otp}`);
-            console.log("⚠️  Email credentials not configured. Add EMAIL_USER and EMAIL_PASS to .env file");
             return { success: true, message: "OTP logged to console (Email not configured)" };
         }
+
+        logger.info('Sending email via Gmail', { email });
 
         const transporter = nodemailer.createTransport({
             service: "gmail",
@@ -32,8 +35,14 @@ const sendEmail = async (email, otp) => {
             `,
         });
 
+        logger.success('Email sent successfully', { messageId: info.messageId, email });
+
         return { success: true, messageId: info.messageId };
     } catch (error) {
+        logger.error('Email service failed', {
+            error: error.message,
+            email
+        });
         console.error("Email Service Error:", error.message);
         console.log(`📧 Fallback - OTP for ${email}: ${otp}`);
         return { success: true, message: "OTP logged to console (Email failed)" };

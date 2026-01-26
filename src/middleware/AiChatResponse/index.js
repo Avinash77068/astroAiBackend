@@ -1,7 +1,14 @@
 const axios = require('axios');
+const logger = require('../../utils/logger');
 
 const getAiChatResponse = async (userMessage, chatHistory = [], userDetails = null) => {
     try {
+        logger.info('Generating AI chat response', {
+            userMessage: userMessage.substring(0, 100) + '...',
+            hasUserDetails: !!userDetails,
+            chatHistoryLength: chatHistory.length
+        });
+
         const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
         let userContext = '';
@@ -56,6 +63,11 @@ ${userContext}
             content: userMessage
         });
 
+        logger.debug('Calling OpenRouter API', {
+            messageCount: messages.length,
+            model: process.env.OPENROUTER_MODEL
+        });
+
         const response = await axios.post(
             process.env.OPENROUTER_SITE_URL,
             {
@@ -74,8 +86,19 @@ ${userContext}
             }
         );
 
-        return response.data.choices[0].message.content;
+        const aiResponse = response.data.choices[0].message.content;
+
+        logger.success('AI response generated successfully', {
+            responseLength: aiResponse.length,
+            model: process.env.OPENROUTER_MODEL
+        });
+
+        return aiResponse;
     } catch (error) {
+        logger.error('OpenRouter API failed', {
+            error: error.response?.data || error.message,
+            userMessage: userMessage.substring(0, 50) + '...'
+        });
         console.error('OpenRouter API Error:', error.response?.data || error.message);
         return "I apologize, but I'm having trouble connecting right now. Please try again in a moment.";
     }

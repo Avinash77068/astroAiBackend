@@ -4,6 +4,7 @@ const sendSMS = require("../middleware/services/twilioService");
 const sendEmail = require("../middleware/services/emailService");
 // In-memory OTP storage (use Redis in production)
 const otpStore = new Map();
+const logger = require("../utils/logger");
 
 
 
@@ -11,7 +12,10 @@ const sendOTP = async (req, res) => {
     try {
         const { phoneNumber, email } = req.body;
 
+        logger.info('OTP request received', { phoneNumber, email });
+
         if (!phoneNumber && !email) {
+            logger.warn('OTP request failed - no phone or email provided');
             return res.status(400).json({
                 success: false,
                 message: "Phone number or email is required",
@@ -27,11 +31,15 @@ const sendOTP = async (req, res) => {
             expiresAt: Date.now() + 5 * 60 * 1000, // 5 min
         });
 
+        logger.debug('OTP generated and stored', { key, otp });
+
         if (phoneNumber) {
             await sendSMS(phoneNumber, otp);
         } else {
             await sendEmail(email, otp);
         }
+
+        logger.success('OTP sent successfully', { phoneNumber, email });
 
         res.status(200).json({
             success: true,
@@ -40,6 +48,11 @@ const sendOTP = async (req, res) => {
            
         });
     } catch (error) {
+        logger.error('OTP sending failed', {
+            error: error.message,
+            phoneNumber: req.body?.phoneNumber,
+            email: req.body?.email
+        });
         console.error(error);
         res.status(500).json({
             success: false,
@@ -54,7 +67,10 @@ const verifyOTP = async (req, res) => {
     try {
         const { phoneNumber, otp, email } = req.body;
 
+        logger.info('OTP verification request', { phoneNumber, email });
+
         if ((!phoneNumber && !email) || !otp) {
+            logger.warn('OTP verification failed - missing required fields', { phoneNumber, email, otp: !!otp });
             return res.status(400).json({
                 success: false,
                 message: "Phone number or email and OTP are required"
@@ -64,6 +80,7 @@ const verifyOTP = async (req, res) => {
         const storedData = otpStore.get(phoneNumber || email);
 
         if (!storedData) {
+            logger.warn('OTP verification failed - OTP not found', { phoneNumber, email });
             return res.status(400).json({
                 success: false,
                 message: "OTP not found or expired"
@@ -72,6 +89,7 @@ const verifyOTP = async (req, res) => {
 
         if (Date.now() > storedData.expiresAt) {
             otpStore.delete(phoneNumber || email);
+            logger.warn('OTP verification failed - OTP expired', { phoneNumber, email });
             return res.status(400).json({
                 success: false,
                 message: "OTP expired"
@@ -79,6 +97,7 @@ const verifyOTP = async (req, res) => {
         }
 
         if (storedData.otp !== otp) {
+            logger.warn('OTP verification failed - invalid OTP', { phoneNumber, email });
             return res.status(400).json({
                 success: false,
                 message: "Invalid OTP"
@@ -88,28 +107,31 @@ const verifyOTP = async (req, res) => {
         // OTP verified successfully
         otpStore.delete(phoneNumber || email);
 
-        // Check if user exists
-        let user;
-        if (phoneNumber) {
-            user = await User.findOne({ phoneNumber });
-            if (!user) {
-                user = await User.create({
-                    phoneNumber,
-                    name: "",
-                    dateOfBirth: "",
-                    gender: ""
-                });
-            }
-        } else {
-            user = await User.findOne({ email });
-            if (!user) {
-                user = await User.create({
-                    email,
-                    name: "",
-                    dateOfBirth: "",
-                    gender: ""
-                });
-            }
+        logger.success('OTP verified successfully', { phoneNumber, email });
+
+        // Check if user exists with this phone number
+        let user = await User.findOne({ phoneNumber });
+        
+        if (!user) {
+            // Create a temporary user record
+            user = await User.create({
+                phoneNumber,
+                name: "",
+                dateOfBirth: "",
+                gender: ""
+            });
+            logger.database('INSERT', 'users', { phoneNumber });
+        }
+        let user2 = await User.findOne({ email });
+
+        if (!user2) {
+            user2 = await User.create({
+                email,
+                name: "",
+                dateOfBirth: "",
+                gender: ""
+            });
+            logger.database('INSERT', 'users', { email });
         }
 
         res.json({
@@ -123,6 +145,11 @@ const verifyOTP = async (req, res) => {
             message: "OTP verified successfully"
         });
     } catch (error) {
+        logger.error('OTP verification error', {
+            error: error.message,
+            phoneNumber: req.body?.phoneNumber,
+            email: req.body?.email
+        });
         res.status(500).json({
             success: false,
             message: error.message

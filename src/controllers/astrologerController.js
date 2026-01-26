@@ -1,14 +1,24 @@
 const Astrologer = require("../model/astrologerSchema.js");
+const logger = require("../utils/logger");
 
 const getAstrologerData = async (req, res) => {
     try {
+        logger.info('Fetching astrologer data');
+
         const astrologerData = await Astrologer.find();
+
+        logger.success('Astrologers fetched successfully', { count: astrologerData.length });
+        logger.database('FIND', 'astrologers', { count: astrologerData.length });
+
         res.status(200).json({
             success: true,
             data: astrologerData,
             message: "Astrologers fetched successfully"
         });
     } catch (error) {
+        logger.error('Error fetching astrologers', {
+            error: error.message
+        });
         res.status(500).json({
             success: false,
             message: "Error fetching astrologers",
@@ -19,6 +29,8 @@ const getAstrologerData = async (req, res) => {
 
 const createAstrologerData = async (req, res) => {
     try {
+        logger.info('Creating astrologer seed data');
+
         await Astrologer.insertMany([
         {
             name: "Rrupa",
@@ -41,12 +53,18 @@ const createAstrologerData = async (req, res) => {
             startTime: new Date(),
         }
     ]);
-        
+
+        logger.success('Astrologers created successfully');
+        logger.database('INSERT_MANY', 'astrologers', { count: 1 });
+
         res.status(201).json({
             success: true,
             message: "Astrologers created successfully"
         });
     } catch (error) {
+        logger.error('Error creating astrologers', {
+            error: error.message
+        });
         res.status(500).json({
             success: false,
             message: "Error creating astrologers",

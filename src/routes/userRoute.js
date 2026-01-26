@@ -7,9 +7,9 @@ router.post("/send-otp", sendOTP);
 router.post("/verify-otp", verifyOTP);
 router.get("/", getAllUsers); 
 router.get("/:id", getUserById);
-router.post("/login", createUser); 
-router.put("/:id", updateUser); 
-router.delete("/:id", deleteUser); 
+router.post("/login", createUser);
+router.put("/:id", updateUser);
+router.delete("/:id", deleteUser);
 router.post("/chat", chatResponse);
 
 module.exports = router;
