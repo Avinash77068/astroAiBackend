@@ -5,6 +5,7 @@ const sendEmail = require("../middleware/services/emailService");
 // In-memory OTP storage (use Redis in production)
 const otpStore = new Map();
 const connectDB = require("../database/db.js");
+const { ConnectionStates } = require("mongoose");
 
 
 
@@ -338,7 +339,63 @@ const chatResponse = async (req, res) => {
         });
     }
 }
+const googleLogin = async (req, res) => {
+    try {
+        await connectDB();
 
+        const { name, email, photo, token: token, isGoogleLogin } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required for Google login"
+            });
+        }
+
+        // Check if user already exists with this email
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            // Create new user with Google data
+            user = await User.create({
+                name: name || "Google User",
+                email,
+                photo,
+                token,
+                isGoogleLogin,
+                dateOfBirth: "",
+                gender: "",
+                phoneNumber: ""
+            });
+        } else {
+            // Update existing user's Google data
+            user.photo = photo || user.photo;
+            user.token = token || user.token;
+            user.isGoogleLogin = isGoogleLogin || user.isGoogleLogin;
+            await user.save();
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                token: "jwt-token-" + user._id,
+                name: user.name,
+                email: user.email,
+                photo: user.photo,
+                userId: user._id,
+                isNewUser: !user.dateOfBirth // Consider user new if they haven't set birth details
+            },
+            message: "Google login successful"
+        });
+    } catch (error) {
+        console.error("Google login error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Google login failed",
+            error: error.message
+        });
+    }
+}
 module.exports = {
     getAllUsers,
     createUser,
@@ -347,5 +404,6 @@ module.exports = {
     sendOTP,
     verifyOTP,
     getUserById,
-    chatResponse
+    chatResponse,
+    googleLogin
 };

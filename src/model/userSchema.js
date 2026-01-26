@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema({
     gender: { type: String, default: "" },
     email: { type: String },
     password: { type: String },
+    photo: { type: String },
+    isGoogleLogin: { type: Boolean, default: false },
+    token: { type: String },
+
     chat: [chatSchema],
 }, {
     timestamps: true
