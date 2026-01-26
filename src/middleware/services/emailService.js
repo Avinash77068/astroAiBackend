@@ -9,7 +9,7 @@ const sendEmail = async (email, otp) => {
             return { success: true, message: "OTP logged to console (Email not configured)" };
         }
 
-        const transporter = nodemailer.createTransporter({
+        const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
                 user: process.env.EMAIL_USER,
