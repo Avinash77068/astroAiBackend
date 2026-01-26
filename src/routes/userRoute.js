@@ -5,7 +5,7 @@ const { getAllUsers, createUser, getUserById, updateUser, deleteUser, chatRespon
 
 router.post("/send-otp", sendOTP);
 router.post("/verify-otp", verifyOTP);
-router.get("/", getAllUsers); 
+router.get("/", getAllUsers);
 router.get("/:id", getUserById);
 router.post("/login", createUser);
 router.put("/:id", updateUser);

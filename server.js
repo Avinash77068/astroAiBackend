@@ -4,8 +4,6 @@ const connectDB = require("./src/database/db.js");
 const homepageRoutes = require("./src/routes/HomepageRoute.js");
 const astrologerRoutes = require("./src/routes/astrologerRoute.js");
 const userRoutesController = require("./src/routes/userRoute.js");
-const logger = require("./src/utils/logger.js");
-const requestLogger = require("./src/middleware/requestLogger.js");
 
 dotenv.config();
 
@@ -15,9 +13,6 @@ const PORT = process.env.PORT || 3000;
 // Body parser middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Request logging middleware
-app.use(requestLogger);
 
 connectDB();
 
@@ -36,7 +31,6 @@ app.get("/health", (req, res) => {
 
 // 404 handler
 app.use((req, res) => {
-    logger.warn(`404 - Route not found: ${req.method} ${req.originalUrl}`);
     res.status(404).json({
         success: false,
         message: "Route not found"
@@ -45,13 +39,6 @@ app.use((req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-    logger.error('Unhandled error', {
-        error: err.message,
-        stack: err.stack,
-        url: req.originalUrl,
-        method: req.method
-    });
-    
     res.status(500).json({
         success: false,
         message: "Internal server error",
@@ -60,8 +47,8 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-    logger.success(`Server started on port http://localhost:${PORT}`);
-    logger.info('Available routes:', {
+    console.log(`Server started on port http://localhost:${PORT}`);
+    console.log('Available routes:', {
         homepage: '/api/homepage',
         astrologer: '/api/astrologer',
         user: '/api/user',
