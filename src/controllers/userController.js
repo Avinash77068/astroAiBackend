@@ -4,7 +4,7 @@ const sendSMS = require("../middleware/services/twilioService");
 const sendEmail = require("../middleware/services/emailService");
 // In-memory OTP storage (use Redis in production)
 const otpStore = new Map();
-const connectDB = require("../database/db");
+const connectDB = require("../database/db.js");
 
 
 

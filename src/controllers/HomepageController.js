@@ -1,4 +1,4 @@
-const connectDB = require("../database/db");
+const connectDB = require("../database/db.js");
 const Home = require("../model/HomepageSchema");
 
 const getHomepageData = async (req, res) => {

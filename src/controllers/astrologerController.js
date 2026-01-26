@@ -1,5 +1,5 @@
 const Astrologer = require("../model/astrologerSchema.js");
-const connectDB = require("../database/db");
+const connectDB = require("../database/db.js");
 
 const getAstrologerData = async (req, res) => {
     try {
