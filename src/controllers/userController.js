@@ -365,7 +365,6 @@ const googleLogin = async (req, res) => {
                 isGoogleLogin,
                 dateOfBirth: "",
                 gender: "",
-                phoneNumber: ""
             });
         } else {
             // Update existing user's Google data
