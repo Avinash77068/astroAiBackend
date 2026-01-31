@@ -5,7 +5,8 @@ const sendEmail = require("../middleware/services/emailService");
 // In-memory OTP storage (use Redis in production)
 const otpStore = new Map();
 const connectDB = require("../database/db.js");
-const { ConnectionStates } = require("mongoose");
+const dotenv = require("dotenv");
+dotenv.config();
 
 
 
@@ -57,7 +58,7 @@ const sendOTP = async (req, res) => {
 const verifyOTP = async (req, res) => {
     try {
         await connectDB();
-        const { phoneNumber, otp, email } = req.body;
+        const { phoneNumber, email, otp } = req.body;
 
         if ((!phoneNumber && !email) || !otp) {
             return res.status(400).json({
@@ -66,7 +67,8 @@ const verifyOTP = async (req, res) => {
             });
         }
 
-        const storedData = otpStore.get(phoneNumber || email);
+        const key = phoneNumber || email;
+        const storedData = otpStore.get(key);
 
         if (!storedData) {
             return res.status(400).json({
@@ -76,7 +78,7 @@ const verifyOTP = async (req, res) => {
         }
 
         if (Date.now() > storedData.expiresAt) {
-            otpStore.delete(phoneNumber || email);
+            otpStore.delete(key);
             return res.status(400).json({
                 success: false,
                 message: "OTP expired"
@@ -90,50 +92,49 @@ const verifyOTP = async (req, res) => {
             });
         }
 
-        // OTP verified successfully
-        otpStore.delete(phoneNumber || email);
+        // OTP verified
+        otpStore.delete(key);
 
-        // Check if user exists with this phone number
-        let user = await User.findOne({ phoneNumber });
-        
-        if (!user) {
-            // Create a temporary user record
-            user = await User.create({
-                phoneNumber,
-                name: "",
-                dateOfBirth: "",
-                gender: ""
+        // 🔹 Check user existence (DO NOT CREATE)
+        const user = await User.findOne({
+            $or: [
+                phoneNumber ? { phoneNumber } : null,
+                email ? { email } : null
+            ].filter(Boolean)
+        });
+
+        // 🔹 If user exists
+        if (user) {
+            return res.json({
+                success: true,
+                data: {
+                    token: "jwt-token-" + user._id,
+                    userId: user._id,
+                    name: user.name,
+                    user: user,
+                    isNewUser: false
+                },
+                message: "OTP verified successfully"
             });
         }
-        let user2 = await User.findOne({ email });
 
-        if (!user2) {
-            user2 = await User.create({
-                email,
-                name: "",
-                dateOfBirth: "",
-                gender: ""
-            });
-        }
-
-        res.json({
+        // 🔹 If user DOES NOT exist (new user)
+        return res.json({
             success: true,
             data: {
-                token: "jwt-token-" + user._id,
-                name: user.name,
-                userId: user._id,
-                isNewUser: !user.name,
-                user: user
+                isNewUser: true
             },
-            message: "OTP verified successfully"
+            message: "OTP verified. New user, please complete profile"
         });
+
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: error.message
         });
     }
 };
+
 
 const getAllUsers = async (req, res) => {
     try {
@@ -181,7 +182,7 @@ const getUserById = async (req, res) => {
 const createUser = async (req, res) => {
     try {
         await connectDB();
-        const { name, place, dateOfBirth, gender, phoneNumber,email } = req.body;
+        const { name, place, dateOfBirth, gender, phoneNumber, email, isGoogleLogin, photo, token } = req.body;
 
         if (!name || !dateOfBirth || !gender) {
             return res.status(400).json({
