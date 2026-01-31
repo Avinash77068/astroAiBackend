@@ -1,45 +1,17 @@
 const axios = require('axios');
+const SYSTEM_PROMPTS = require('./api/prompts');
+const { buildUserContext } = require('./api/helpers');
+const { callOpenRouter } = require('./api/openRouterService');
 
 const getAiChatResponse = async (userMessage, chatHistory = [], userDetails = null) => {
     try {
-        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-
-        let userContext = '';
-        if (userDetails) {
-            userContext = `\n\nUser Information:
-- Name: ${userDetails?.name}
-- Date of Birth: ${userDetails?.dateOfBirth}
-- Place of Birth: ${userDetails?.place}
-- Gender: ${userDetails?.gender}
-- Phone: ${userDetails?.phoneNumber}
-
-Use this information to provide personalized astrological insights based on their birth details.`;
-        }
+        const userContext = buildUserContext(userDetails);
 
         const messages = [
             {
                 role: "system",
-                content: `
-You are a highly 10 years experienced, intuitive, and charismatic astrologer.
-You speak like a real human astrologer, not like an AI.
-
-Rules you MUST follow:
-- Read and understand the full chat context before replying
-- If the user asks a question, answer ONLY that question
-- Respond like a seasoned astrologer who predicts confidently
-- Tone should feel mysterious, warm, and emotionally engaging
-- Responses must feel personal and natural, never robotic
-- NEVER mention AI, models, predictions, or analysis
-- Answer should be short, powerful, and attraction-driven
-- Use subtle astrological intuition, not explanations
-- Make the user feel understood, guided, and curious
-
-Use birth details only if relevant.
-Avoid long advice, avoid bullet points.
-Speak as if reading destiny directly.
-
-${userContext}
-`}
+                content: SYSTEM_PROMPTS.astro + userContext
+            }
         ];
 
         if (chatHistory.length > 0) {
@@ -56,25 +28,7 @@ ${userContext}
             content: userMessage
         });
 
-        const response = await axios.post(
-            process.env.OPENROUTER_SITE_URL,
-            {
-                model: process.env.OPENROUTER_MODEL,
-                messages: messages,
-                temperature: 0.7,
-                max_tokens: 500
-            },
-            {
-                headers: {
-                    'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-                    'Content-Type': 'application/json',
-                    'HTTP-Referer': 'https://astroai.app',
-                    'X-Title': 'AstroAI'
-                }
-            }
-        );
-
-        const aiResponse = response.data.choices[0].message.content;
+        const aiResponse = await callOpenRouter(messages);
 
         return aiResponse;
     } catch (error) {
