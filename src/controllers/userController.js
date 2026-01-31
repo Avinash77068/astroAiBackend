@@ -8,8 +8,6 @@ const connectDB = require("../database/db.js");
 const dotenv = require("dotenv");
 dotenv.config();
 
-
-
 const sendOTP = async (req, res) => {
     try {
         await connectDB();
@@ -52,8 +50,6 @@ const sendOTP = async (req, res) => {
         });
     }
 };
-
-
 
 const verifyOTP = async (req, res) => {
     try {
@@ -134,7 +130,6 @@ const verifyOTP = async (req, res) => {
         });
     }
 };
-
 
 const getAllUsers = async (req, res) => {
     try {
@@ -290,65 +285,9 @@ const deleteUser = async (req, res) => {
         });
     }
 };
-const chatResponse = async (req, res) => {
-    try {
-        await connectDB();
-        const { userId, message } = req.body;
 
-        if (!userId || !message) {
-            return res.status(400).json({
-                success: false,
-                message: "userId and message are required"
-            });
-        }
 
-        const user = await User.findById(userId);
-        
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            });
-        }
 
-        const userDetails = {
-            name: user.name,
-            dateOfBirth: user.dateOfBirth,
-            place: user.place,
-            gender: user.gender,
-            phoneNumber: user.phoneNumber
-        };
-        
-        const astroResponse = await getAiChatResponse(message, user.chat, userDetails);
-
-        user.chat.push({
-            message: message,
-            sender: "user",
-            astroResponse: astroResponse,
-            timestamp: new Date()
-        });
-
-        await user.save();
-
-        return res.json({
-            success: true,
-            message: "Chat created successfully",
-            data: {
-                message: message,
-                sender: "user",
-                astroResponse: astroResponse,
-                timestamp: user.chat[user.chat.length - 1].timestamp,
-                _id: user.chat[user.chat.length - 1]._id
-            }
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Error creating chat",
-            error: error.message
-        });
-    }
-}
 const googleLogin = async (req, res) => {
     try {
         await connectDB();
@@ -407,6 +346,77 @@ const googleLogin = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Google login failed",
+            error: error.message
+        });
+    }
+}
+
+const chatResponse = async (req, res) => {
+    try {
+        await connectDB();
+        const { userId, message } = req.body;
+
+        if (!userId || !message) {
+            return res.status(400).json({
+                success: false,
+                message: "userId and message are required"
+            });
+        }
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        const userDetails = {
+            name: user.name,
+            dateOfBirth: user.dateOfBirth,
+            place: user.place,
+            gender: user.gender,
+            phoneNumber: user.phoneNumber
+        };
+
+        const astroResponse = await getAiChatResponse(message, user.chat, userDetails);
+        if(!astroResponse || astroResponse === ""){
+            user.chat.push({
+                message: message,
+                sender: "user",
+                astroResponse: "Sorry, Unable to Understand Your Query",
+                timestamp: new Date()
+            });
+        }
+        else {
+            user.chat.push({
+                message: message,
+                sender: "user",
+                astroResponse: astroResponse,
+                timestamp: new Date()
+            });
+
+        }
+
+        
+        await user.save();
+
+        return res.json({
+            success: true,
+            message: "Chat created successfully",
+            data: {
+                message: message,
+                sender: "user",
+                astroResponse: astroResponse,
+                timestamp: user.chat[user.chat.length - 1].timestamp,
+                _id: user.chat[user.chat.length - 1]._id
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Error creating chat",
             error: error.message
         });
     }
