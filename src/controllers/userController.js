@@ -184,6 +184,18 @@ const createUser = async (req, res) => {
         await connectDB();
         const { name, place, dateOfBirth, gender, phoneNumber, email, isGoogleLogin, photo, token } = req.body;
 
+        const userData = {
+            name,
+            place,
+            dateOfBirth,
+            gender,
+            phoneNumber,
+            email,
+            isGoogleLogin,
+            photo,
+            token
+        };
+
         if (!name || !dateOfBirth || !gender) {
             return res.status(400).json({
                 success: false,
@@ -197,7 +209,7 @@ const createUser = async (req, res) => {
         if (phoneNumber) {
             user = await User.findOneAndUpdate(
                 { phoneNumber },
-                { name, place, dateOfBirth, gender },
+                userData,
                 { new: true, upsert: true }
             );
 
@@ -205,17 +217,14 @@ const createUser = async (req, res) => {
         else if(email) {
             user = await User.findOneAndUpdate(
                 { email },
-                { name, place, dateOfBirth, gender },
+                userData,
                 { new: true, upsert: true }
             );
         }
         else {
-            // Create new user without phone number
-            user = await User.create({
-                name,
-                place,
-                dateOfBirth,
-                gender
+            return res.status(400).json({
+                success: false,
+                message: "Phone number or email is required"
             });
         }
 

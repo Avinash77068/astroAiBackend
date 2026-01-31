@@ -20,7 +20,7 @@ Use this information to provide personalized astrological insights based on thei
             {
                 role: "system",
                 content: `
-You are a highly experienced, intuitive, and charismatic astrologer.
+You are a highly 10 years experienced, intuitive, and charismatic astrologer.
 You speak like a real human astrologer, not like an AI.
 
 Rules you MUST follow:
