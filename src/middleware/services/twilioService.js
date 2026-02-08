@@ -1,7 +1,7 @@
 const twilio = require("twilio");
 
 const sendSMS = async (phone, otp) => {
-    try {
+    try {    
         // Check if Twilio credentials are configured
         if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE) {
             console.log(`📱 SMS OTP for ${phone}: ${otp}`);
@@ -9,15 +9,15 @@ const sendSMS = async (phone, otp) => {
             return { success: true, message: "OTP logged to console (Twilio not configured)" };
         }
 
-        const client = twilio(
+        const client = require('twilio')(
             process.env.TWILIO_ACCOUNT_SID,
             process.env.TWILIO_AUTH_TOKEN
         );
-
+        const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
         const message = await client.messages.create({
             body: `Your AstroAI OTP is: ${otp}. Valid for 5 minutes.`,
             from: process.env.TWILIO_PHONE,
-            to: phone,
+            to: formattedPhone,
         });
 
         return { success: true, sid: message.sid };
