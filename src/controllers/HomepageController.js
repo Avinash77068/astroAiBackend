@@ -24,9 +24,8 @@ const getHomepageData = async (req, res) => {
 
 const createHomepageData = async (req, res) => {
     try {
-        const { data } = req.body;
-        data.adminMail = process.env.MAIL_USER;
-        if (!data.adminMail) {
+        const { adminMail } = req.body;
+        if (adminMail !== process.env.MAIL_USER) {
             return res.status(400).json({
                 success: false,
                 message: "You are not authorized to create home data 😔"
