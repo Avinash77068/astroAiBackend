@@ -1,6 +1,7 @@
 const connectDB = require("../database/db.js");
 const Home = require("../model/HomepageSchema");
-
+const dotenv = require("dotenv");
+dotenv.config();
 const getHomepageData = async (req, res) => {
     try {
         await connectDB();
@@ -23,6 +24,14 @@ const getHomepageData = async (req, res) => {
 
 const createHomepageData = async (req, res) => {
     try {
+        const { data } = req.body;
+        data.adminMail = process.env.MAIL_USER;
+        if (!data.adminMail) {
+            return res.status(400).json({
+                success: false,
+                message: "You are not authorized to create home data 😔"
+            });
+        }
         await connectDB();
         const homeData = await Home.findOneAndUpdate(
             {},
@@ -219,12 +228,163 @@ const createHomepageData = async (req, res) => {
                     appConfig: {
                         appName: "AstroSage AI",
                         notificationCount: "6",
+                        webClientId: process.env.WEB_CLIENT_ID,
                         userProfile: {
                             name: "Guest",
                             plan: "Basic"
+                        },
+                        constants: {
+                            COLORS: {
+                                "primary": "#EDB33E",
+                                "primaryDark": "#D9A027",
+                                "primarySoft": "#FFF3D6",
+
+                                "background": "#FFFFFF",
+                                "cardBackground": "#F6F3FF",
+                                "headerBackground": "#FFFFFF",
+
+                                "textPrimary": "#111827",
+                                "textSecondary": "#4B5563",
+                                "textTertiary": "#6B7280",
+                                "textInverse": "#FFFFFF",
+
+                                "accentPurple": "#6A35FF",
+                                "accentIndigo": "#4338CA",
+                                "accentLavender": "#EDE9FE",
+
+                                "success": "#22C55E",
+                                "error": "#EF4444",
+                                "warning": "#F59E0B",
+                                "info": "#8B5CF6",
+
+                                "gradients": {
+                                    "spiritual": ["#FFFFFF", "#F6F3FF", "#EDE9FE"],
+                                    "goldGlow": ["#FFF7E6", "#FFD77A", "#EDB33E"]
+                                },
+
+                                "border": "rgba(17, 24, 39, 0.10)",
+                                "borderLight": "rgba(17, 24, 39, 0.06)",
+
+                                "shadow": "rgba(17, 24, 39, 0.12)",
+                                "overlay": "rgba(17, 24, 39, 0.25)",
+
+                                "notificationBadge": "#EF4444",
+                                "verified": "#EDB33E",
+                                "freePrice": "#22C55E"
+                            },
+
+                            TEXT_SIZES: {
+                                "xs": 10,
+                                "sm": 12,
+                                "base": 14,
+                                "lg": 16,
+                                "xl": 18,
+                                "2xl": 20,
+                                "3xl": 24,
+                                "4xl": 36
+                            },
+
+                            FONT_WEIGHTS: {
+                                "normal": "400",
+                                "medium": "500",
+                                "semibold": "600",
+                                "bold": "700"
+                            },
+
+                            SPACING: {
+                                "xs": 4,
+                                "sm": 8,
+                                "md": 12,
+                                "lg": 16,
+                                "xl": 20,
+                                "2xl": 24,
+                                "3xl": 32,
+                                "4xl": 40
+                            },
+
+                            BORDER_RADIUS: {
+                                "sm": 4,
+                                "md": 8,
+                                "lg": 12,
+                                "xl": 16,
+                                "2xl": 24,
+                                "full": 9999
+                            },
+
+                            COMMON_STYLES: {
+                                "container": {
+                                    "flex": 1,
+                                    "backgroundColor": "COLORS.background"
+                                },
+
+                                "card": {
+                                    "backgroundColor": "COLORS.cardBackground",
+                                    "borderRadius": "BORDER_RADIUS.md",
+                                    "padding": "SPACING.lg"
+                                },
+
+                                "button": {
+                                    "backgroundColor": "COLORS.primary",
+                                    "borderRadius": "BORDER_RADIUS.sm",
+                                    "paddingVertical": "SPACING.sm",
+                                    "paddingHorizontal": "SPACING.lg",
+                                    "alignItems": "center"
+                                },
+
+                                "buttonSecondary": {
+                                    "backgroundColor": "COLORS.cardBackground",
+                                    "borderRadius": "BORDER_RADIUS.sm",
+                                    "paddingVertical": "SPACING.sm",
+                                    "paddingHorizontal": "SPACING.lg",
+                                    "alignItems": "center"
+                                },
+
+                                "textPrimary": {
+                                    "color": "COLORS.textPrimary",
+                                    "fontSize": "TEXT_SIZES.base"
+                                },
+
+                                "textSecondary": {
+                                    "color": "COLORS.textSecondary",
+                                    "fontSize": "TEXT_SIZES.sm"
+                                },
+
+                                "textTertiary": {
+                                    "color": "COLORS.textTertiary",
+                                    "fontSize": "TEXT_SIZES.sm"
+                                },
+
+                                "input": {
+                                    "backgroundColor": "COLORS.cardBackground",
+                                    "borderRadius": "BORDER_RADIUS.sm",
+                                    "padding": "SPACING.md",
+                                    "color": "COLORS.textPrimary"
+                                },
+
+                                "banner": {
+                                    "borderRadius": "BORDER_RADIUS.md",
+                                    "padding": "SPACING.2xl",
+                                    "alignItems": "center"
+                                },
+
+                                "grid": {
+                                    "flexDirection": "row",
+                                    "flexWrap": "wrap",
+                                    "justifyContent": "space-between"
+                                },
+
+                                "gridItem": {
+                                    "width": "30%",
+                                    "backgroundColor": "COLORS.cardBackground",
+                                    "borderRadius": "BORDER_RADIUS.md",
+                                    "padding": "SPACING.lg",
+                                    "marginBottom": "SPACING.lg",
+                                    "alignItems": "center"
+                                }
+                            }
                         }
                     }
-                }
+                },
             },
             { upsert: true, new: true }
         );

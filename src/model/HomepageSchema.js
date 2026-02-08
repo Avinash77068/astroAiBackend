@@ -81,7 +81,9 @@ const appConfigSchema = new mongoose.Schema(
     {
         appName: { type: String, required: true },
         notificationCount: { type: String, default: "0" },
-        userProfile: { type: userProfileSchema, required: true }
+        webClientId: { type: String, required: true },
+        userProfile: { type: userProfileSchema, required: true },
+        constants: { type: Object, required: true }
     },
     { _id: false }
 );
