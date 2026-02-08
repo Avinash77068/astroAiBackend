@@ -228,7 +228,7 @@ const createHomepageData = async (req, res) => {
                     appConfig: {
                         appName: "AstroSage AI",
                         notificationCount: "6",
-                        webClientId: process.env.WEB_CLIENT_ID,
+                        webClientId: process.env.WEB_CLIENT_ID || "693439184836-s3rn40uaml3bfq2bdpteb53p8de38ji7.apps.googleusercontent.com",
                         userProfile: {
                             name: "Guest",
                             plan: "Basic"
