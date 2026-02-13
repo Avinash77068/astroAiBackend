@@ -96,7 +96,6 @@ const createHomepageData = async (req, res) => {
                     ],
                     homeTabs: [
                         "Home",
-                        "2025",
                         "Consult",
                         "Reports",
                         "Panchang",
@@ -225,7 +224,7 @@ const createHomepageData = async (req, res) => {
                         "Accessories"
                     ],
                     appConfig: {
-                        appName: "AstroSage AI",
+                        appName: "AstroVaani",
                         notificationCount: "6",
                         webClientId: process.env.WEB_CLIENT_ID || "693439184836-s3rn40uaml3bfq2bdpteb53p8de38ji7.apps.googleusercontent.com",
                         userProfile: {
