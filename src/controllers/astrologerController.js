@@ -1,6 +1,6 @@
 const Astrologer = require("../model/astrologerSchema.js");
 const connectDB = require("../database/db.js");
-
+const mongoose = require("mongoose");
 const getAstrologerData = async (req, res) => {
     try {
         await connectDB();
@@ -20,36 +20,50 @@ const getAstrologerData = async (req, res) => {
     }
 };
 
+
 const createAstrologerData = async (req, res) => {
     try {
         await connectDB();
-        await Astrologer.insertMany([
-        {
-            name: "Rrupa",
+
+        const astrologerProfiles = [
+            { name: "Aditya Kumar", image: "https://example.com/images/astrologers/rrupa.jpg" },
+            { name: "Avinash Shrivastav", image: "https://example.com/images/astrologers/arya.jpg" },
+            { name: "Shalini Shrivastav", image: "https://example.com/images/astrologers/meera.jpg" },
+            { name: "Shivi Shrivastav", image: "https://example.com/images/astrologers/kavya.jpg" },
+        ];
+
+        const generatedAstrologers = astrologerProfiles.map((profile, index) => ({
+            name: profile.name,
             type: "Tarot",
-            rating: 4.9,
-            reviews: 15,
-            price: "₹30/min",
+            rating: +(4 + Math.random()).toFixed(1),
+            reviews: Math.floor(Math.random() * 100),
+            price: `₹${20 + Math.floor(Math.random() * 30)}/min`,
             verified: true,
-            image: "https://example.com/images/astrologers/rrupa.jpg",
-            experience: "5 years",
+            image: profile.image,
+            experience: `${2 + index} years`,
             languages: ["English", "Hindi"],
             specialization: ["Tarot", "Relationships"],
-            description: "Rrupa is a Tarot astrologer with 5 years of experience. She is fluent in English and Hindi and specializes in Tarot and Relationships.",
-            jwtToken: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
-            sessionId: 'session_1737650940000',
-            astrologerId: 1,
-            userId: '918334904005',
-            sessionType: 'chat',
-            status: 'active',
+            description: `${profile.name} is a professional Tarot astrologer.`,
+            jwtToken:
+                Math.random().toString(36).substring(2, 15) +
+                Math.random().toString(36).substring(2, 15),
+            sessionId: `session_${Date.now()}_${index}`,
+            astrologerId: index + 1,
+            userId: new mongoose.Types.ObjectId(),
+            sessionType: "CHAT",
+            status: "ONLINE",
+
             startTime: new Date(),
-        }
-    ]);
+        }));
+
+        await Astrologer.insertMany(generatedAstrologers);
 
         res.status(201).json({
             success: true,
-            message: "Astrologers created successfully"
+            message: "Astrologers created successfully",
+            count: generatedAstrologers.length
         });
+
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -58,5 +72,6 @@ const createAstrologerData = async (req, res) => {
         });
     }
 };
+
 
 module.exports = { getAstrologerData, createAstrologerData };
