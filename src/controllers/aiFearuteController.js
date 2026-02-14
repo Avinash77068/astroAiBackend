@@ -1,5 +1,4 @@
-const express = require("express");
-const { getAiChatResponse } = require("../middleware/AiChatResponse");
+
 const AiFeature = require("../model/aiFeatureSchema");
 const connectDB = require("../database/db.js");
 const { generateKundliReport } = require('../services/kundliService');
@@ -24,16 +23,7 @@ const analyzeMentalHealth = (req, res) => {
     res.json({ success: true, message: "Mental Health analysis requested" });
 };
 const analyzeKundli = async (req, res) => {
-    try {
-        await connectDB();
-        const { userId, ...input } = req.body;
-        const userDetails = { name: input.name, dateOfBirth: input.dateOfBirth, place: input.placeOfBirth };
-        const report = await generateKundliReport(input, userDetails);
-        await AiFeature.create({ userId, featureType: 'kundli', input, output: report });
-        res.json({ success: true, report });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+   res.json({ success: true, message: "Kundli analysis requested" });
 };
 const analyzeAstrology = (req, res) => {
     res.json({ success: true, message: "Astrology analysis requested" });
