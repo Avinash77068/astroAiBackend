@@ -17,6 +17,25 @@ const listPendingApplications = async (_req, res) => {
     }
 };
 
+const getAdminDashboardStats = async (_req, res) => {
+    try {
+        await connectDB();
+        const [customers, astrologers, pendingApplications, listedAstrologers] = await Promise.all([
+            User.countDocuments({ role: 'USER' }),
+            User.countDocuments({ role: 'ASTROLOGER' }),
+            User.countDocuments({ astrologerApplicationStatus: 'PENDING' }),
+            Astrologer.countDocuments()
+        ]);
+
+        return res.json({
+            success: true,
+            data: { customers, astrologers, pendingApplications, listedAstrologers }
+        });
+    } catch (_error) {
+        return res.status(500).json({ success: false, message: 'Unable to load admin dashboard stats' });
+    }
+};
+
 const reviewApplication = async (req, res) => {
     try {
         await connectDB();
@@ -97,4 +116,4 @@ const reviewApplication = async (req, res) => {
     }
 };
 
-module.exports = { listPendingApplications, reviewApplication };
+module.exports = { getAdminDashboardStats, listPendingApplications, reviewApplication };
