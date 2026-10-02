@@ -6,6 +6,7 @@ const profiles = [
         experience: "8 years",
         languages: ["English", "Tamil", "Kannada", "Hindi"],
         specialization: ["Vedic", "Remedies", "Predictions"],
+        image: "",
         profileUrl: "https://astrotalk.com/best-astrologer/anandan",
         description: "External AstroTalk profile. Listed for Vedic astrology, remedies, and predictions. Availability is managed on AstroTalk."
     },
@@ -16,6 +17,7 @@ const profiles = [
         experience: "4 years",
         languages: ["English", "Hindi", "Sanskrit"],
         specialization: ["Vedic", "Remedies", "Predictions"],
+        image: "https://aws.astrotalk.com/consultant_pic/p-77421.jpg",
         profileUrl: "https://astrotalk.com/best-astrologer/rajish",
         description: "External AstroTalk profile. Listed for Vedic astrology, remedies, and predictions. Availability is managed on AstroTalk."
     },
@@ -26,6 +28,7 @@ const profiles = [
         experience: "4 years",
         languages: ["Hindi"],
         specialization: ["Vedic", "Vastu", "Remedies", "Predictions"],
+        image: "https://aws.astrotalk.com/consultant_pic/p-66205.jpg",
         profileUrl: "https://astrotalk.com/best-astrologer/harikishan",
         description: "External AstroTalk profile. Listed for Vedic astrology, Vastu, remedies, and predictions. Availability is managed on AstroTalk."
     },
@@ -36,6 +39,7 @@ const profiles = [
         experience: "9 years",
         languages: ["English", "Hindi"],
         specialization: ["Vedic", "Numerology", "Vastu", "Face Reading", "Remedies", "Predictions"],
+        image: "https://aws.astrotalk.com/consultant_pic/p-52679.jpg",
         profileUrl: "https://astrotalk.com/best-astrologer/Srinath",
         description: "External AstroTalk profile. Listed for Vedic astrology, numerology, Vastu, and face reading. Availability is managed on AstroTalk."
     },
@@ -46,6 +50,7 @@ const profiles = [
         experience: "9 years",
         languages: ["Hindi"],
         specialization: ["Vedic", "Life Coach", "Remedies", "Predictions"],
+        image: "https://aws.astrotalk.com/consultant_pic/p-126823.jpg",
         profileUrl: "https://astrotalk.com/best-astrologer/mahinath",
         description: "External AstroTalk profile. Listed for Vedic astrology and life coaching. Availability is managed on AstroTalk."
     },
@@ -56,6 +61,7 @@ const profiles = [
         experience: "5 years",
         languages: ["Hindi", "English"],
         specialization: ["Vedic", "Nadi", "Vastu", "Prashana", "Palmistry", "Face Reading", "Remedies", "Predictions"],
+        image: "https://aws.astrotalk.com/consultant_pic/p-103130.jpg",
         profileUrl: "https://astrotalk.com/best-astrologer/svaminath",
         description: "External AstroTalk profile. Listed for Vedic, Nadi, Vastu, Prashana, and palmistry. Availability is managed on AstroTalk."
     },
@@ -66,6 +72,7 @@ const profiles = [
         experience: "26 years",
         languages: ["English", "Hindi"],
         specialization: ["Vedic", "Tarot", "Palmistry", "Face Reading", "Remedies", "Predictions"],
+        image: "https://aws.astrotalk.com/consultant_pic/p-41269.jpg",
         profileUrl: "https://astrotalk.com/best-astrologer/gaurav",
         description: "External AstroTalk profile. Listed for Vedic astrology, Tarot, palmistry, and face reading. Availability is managed on AstroTalk."
     },
@@ -76,6 +83,7 @@ const profiles = [
         experience: "23 years",
         languages: ["Hindi"],
         specialization: ["Vedic", "Nadi", "Vastu", "Remedies", "Predictions"],
+        image: "https://aws.astrotalk.com/consultant_pic/p-127934.jpg",
         profileUrl: "https://astrotalk.com/best-astrologer/ramlakhan",
         description: "External AstroTalk profile. Listed for Vedic, Nadi, Vastu, and remedies. Availability is managed on AstroTalk."
     },
@@ -86,6 +94,7 @@ const profiles = [
         experience: "4 years",
         languages: ["English", "Tamil"],
         specialization: ["Vedic", "Remedies", "Predictions"],
+        image: "",
         profileUrl: "https://astrotalk.com/best-astrologer/eeswaran",
         description: "External AstroTalk profile. Listed for Vedic astrology, remedies, and predictions. Availability is managed on AstroTalk."
     },
@@ -96,6 +105,7 @@ const profiles = [
         experience: "6 years",
         languages: ["Hindi", "Marathi"],
         specialization: ["Vedic", "Remedies", "Predictions"],
+        image: "",
         profileUrl: "https://astrotalk.com/best-astrologer/ishrith",
         description: "External AstroTalk profile. Listed for Vedic astrology, remedies, and predictions. Availability is managed on AstroTalk."
     }
@@ -107,7 +117,8 @@ module.exports = profiles.map((profile, index) => ({
     rating: 0,
     reviews: 0,
     verified: false,
-    image: "",
+    // `image` must be a direct image URL; `profileUrl` is an HTML page.
+    image: profile.image || "",
     status: "OFFLINE",
     sessionType: "CHAT"
 }));

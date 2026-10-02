@@ -43,10 +43,13 @@ const seedRashis = async () => {
 // Refresh seeded profile fields without changing user/session identifiers or chat history.
 const seedAstrologers = async () => {
     await Astrologer.bulkWrite(
-        astrologerSeed.map(astrologer => ({
+        astrologerSeed.map(({ rating, reviews, verified, status, sessionType, ...profile }) => ({
             updateOne: {
-                filter: { astrologerId: astrologer.astrologerId },
-                update: { $set: astrologer },
+                filter: { astrologerId: profile.astrologerId },
+                update: {
+                    $set: profile,
+                    $setOnInsert: { rating, reviews, verified, status, sessionType }
+                },
                 upsert: true
             }
         }))
