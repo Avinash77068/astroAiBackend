@@ -3,7 +3,7 @@ const Astrologer = require("../model/astrologerSchema");
 const mongoose = require("mongoose");
 const { getAiChatResponse } = require("../middleware/AiChatResponse");
 const sendSMS = require("../middleware/services/twilioService");
-const sendEmail = require("../middleware/services/emailService");
+const { sendOtpEmail, sendAstrologerActivityEmail } = require("../middleware/services/emailService");
 const { ensureWallet } = require("../services/walletService");
 // In-memory OTP storage (use Redis in production)
 const otpStore = new Map();
@@ -23,27 +23,38 @@ const sendOTP = async (req, res) => {
             });
         }
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
         const key = phoneNumber || email;
+        const previousOtp = otpStore.get(key);
+        if (previousOtp?.resendAt > Date.now()) {
+            return res.status(429).json({
+                success: false,
+                message: "Please wait before requesting another code",
+                data: { retryAfterSeconds: Math.ceil((previousOtp.resendAt - Date.now()) / 1000) }
+            });
+        }
 
-        otpStore.set(key, {
-            otp,
-            expiresAt: Date.now() + 5 * 60 * 1000, // 5 min
-        });
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
         if (phoneNumber) {
             await sendSMS(phoneNumber, otp);
         } else {
-            await sendEmail(email, otp);
+            await sendOtpEmail(email, otp);
         }
+
+        const sentAt = Date.now();
+        otpStore.set(key, {
+            otp,
+            expiresAt: sentAt + 5 * 60 * 1000,
+            resendAt: sentAt + 60 * 1000
+        });
 
         res.status(200).json({
             success: true,
             data: {
-                otp
+                expiresInSeconds: 300,
+                resendAfterSeconds: 60
             },
-            message: "OTP sent successfully",
+            message: "OTP sent successfully"
         });
     } catch (error) {
         console.error(error);
@@ -388,8 +399,10 @@ const chatResponse = async (req, res) => {
             });
         }
 
-        const astrologerExists = await Astrologer.exists({ _id: normalizedAstrologerId });
-        if (!astrologerExists) {
+        const astrologer = await Astrologer.findById(normalizedAstrologerId)
+            .select("name notificationEmail userId")
+            .populate("userId", "email");
+        if (!astrologer) {
             return res.status(404).json({
                 success: false,
                 message: "Astrologer not found"
@@ -419,6 +432,18 @@ const chatResponse = async (req, res) => {
         user.chat.push(chatEntry);
 
         await user.save();
+
+        const astrologerEmail = astrologer.notificationEmail || astrologer.userId?.email;
+        if (astrologerEmail) {
+            sendAstrologerActivityEmail({
+                to: astrologerEmail,
+                astrologerName: astrologer.name,
+                customerName: user.name,
+                eventLabel: "New customer message"
+            }).catch(error => {
+                console.error("Astrologer message notification failed:", error.message);
+            });
+        }
 
         return res.json({
             success: true,

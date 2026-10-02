@@ -14,6 +14,13 @@ const astrologerSchema = new mongoose.Schema(
             index: true
         },
 
+        notificationEmail: {
+            type: String,
+            trim: true,
+            lowercase: true,
+            select: false
+        },
+
         name: {
             type: String,
             required: true,
