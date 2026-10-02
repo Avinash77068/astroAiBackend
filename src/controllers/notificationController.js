@@ -1,18 +1,21 @@
 const connectDB = require('../database/db');
 const Notification = require('../model/notificationSchema');
 
+const getRecipient = auth => {
+    const roles = auth.roles || [auth.role];
+    const isAstrologer = roles.includes('ASTROLOGER');
+    return {
+        recipientId: isAstrologer ? auth.astrologerId || auth.id : auth.id,
+        recipientRole: isAstrologer ? 'ASTROLOGER' : 'USER'
+    };
+};
+
 const listNotifications = async (req, res) => {
     try {
         await connectDB();
-        const notifications = await Notification.find({
-            recipientId: req.auth.id,
-            recipientRole: req.auth.role
-        }).sort({ createdAt: -1 }).limit(50).lean();
-        const unreadCount = await Notification.countDocuments({
-            recipientId: req.auth.id,
-            recipientRole: req.auth.role,
-            readAt: null
-        });
+        const recipient = getRecipient(req.auth);
+        const notifications = await Notification.find(recipient).sort({ createdAt: -1 }).limit(50).lean();
+        const unreadCount = await Notification.countDocuments({ ...recipient, readAt: null });
 
         return res.json({ success: true, data: { notifications, unreadCount } });
     } catch (error) {
@@ -23,11 +26,11 @@ const listNotifications = async (req, res) => {
 const markNotificationRead = async (req, res) => {
     try {
         await connectDB();
+        const recipient = getRecipient(req.auth);
         const notification = await Notification.findOneAndUpdate(
             {
                 _id: req.params.id,
-                recipientId: req.auth.id,
-                recipientRole: req.auth.role
+                ...recipient
             },
             { $set: { readAt: new Date() } },
             { new: true }
@@ -45,10 +48,10 @@ const markNotificationRead = async (req, res) => {
 const markAllNotificationsRead = async (req, res) => {
     try {
         await connectDB();
+        const recipient = getRecipient(req.auth);
         await Notification.updateMany(
             {
-                recipientId: req.auth.id,
-                recipientRole: req.auth.role,
+                ...recipient,
                 readAt: null
             },
             { $set: { readAt: new Date() } }

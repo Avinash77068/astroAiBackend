@@ -14,6 +14,30 @@ const astrologerSchema = new mongoose.Schema(
             index: true
         },
 
+        accountId: {
+            type: mongoose.Schema.Types.ObjectId,
+            unique: true,
+            sparse: true,
+            index: true
+        },
+
+        roles: {
+            type: [{ type: String, enum: ["USER", "ASTROLOGER", "ADMIN"] }],
+            default: ["ASTROLOGER"]
+        },
+
+        email: { type: String, trim: true, lowercase: true, select: false },
+        phoneNumber: { type: String, trim: true, select: false },
+        place: { type: String, default: "" },
+        dateOfBirth: { type: String, default: "" },
+        gender: { type: String, default: "" },
+        photo: { type: String, default: "" },
+        astrologerApplicationStatus: {
+            type: String,
+            enum: ["APPROVED"],
+            default: "APPROVED"
+        },
+
         notificationEmail: {
             type: String,
             trim: true,
@@ -114,7 +138,14 @@ const astrologerSchema = new mongoose.Schema(
         sessionId: {
             type: String,
             index: true
-        }
+        },
+        chat: [{
+            astrologerId: { type: mongoose.Schema.Types.ObjectId, ref: "Astrologer" },
+            message: { type: String },
+            sender: { type: String },
+            astroResponse: { type: String },
+            timestamp: { type: Date, default: Date.now }
+        }]
     },
     {
         timestamps: true

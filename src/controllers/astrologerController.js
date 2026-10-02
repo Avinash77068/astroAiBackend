@@ -4,7 +4,8 @@ const mongoose = require("mongoose");
 const getAstrologerData = async (req, res) => {
     try {
         await connectDB();
-        const astrologerData = await Astrologer.find();
+        const astrologerData = await Astrologer.find()
+            .select("_id astrologerId name type description rating reviews price verified image profileUrl experience languages specialization sessionType status startTime");
 
         res.status(200).json({
             success: true,

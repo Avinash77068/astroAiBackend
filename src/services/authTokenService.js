@@ -1,18 +1,25 @@
 const jwt = require('jsonwebtoken');
 
-const signAuthToken = (id, role = 'USER', astrologerId) => {
+const VALID_ROLES = ['USER', 'ASTROLOGER', 'ADMIN'];
+
+const normalizeRoles = roles => {
+    const normalized = (Array.isArray(roles) ? roles : [roles])
+        .filter(role => typeof role === 'string')
+        .map(role => role.toUpperCase())
+        .filter(role => VALID_ROLES.includes(role));
+    return [...new Set(normalized.length ? normalized : ['USER'])];
+};
+
+const signAuthToken = (id, roles = ['USER'], astrologerId) => {
     if (!process.env.JWT_SECRET) {
         throw new Error('JWT_SECRET is required to issue an authentication token');
     }
 
-    const normalizedRole = String(role).toUpperCase();
-    if (!['USER', 'ASTROLOGER', 'ADMIN'].includes(normalizedRole)) {
-        throw new Error('Cannot issue an authentication token for an unsupported role');
-    }
+    const normalizedRoles = normalizeRoles(roles);
 
     return jwt.sign(
         {
-            role: normalizedRole,
+            roles: normalizedRoles,
             ...(astrologerId ? { astrologerId: String(astrologerId) } : {})
         },
         process.env.JWT_SECRET,
@@ -23,4 +30,4 @@ const signAuthToken = (id, role = 'USER', astrologerId) => {
     );
 };
 
-module.exports = { signAuthToken };
+module.exports = { signAuthToken, normalizeRoles };

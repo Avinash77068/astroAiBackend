@@ -1,5 +1,6 @@
 const connectDB = require("../database/db.js");
 const User = require("../model/userSchema.js");
+const Astrologer = require("../model/astrologerSchema.js");
 const Wallet = require("../model/walletSchema.js");
 const WalletTransaction = require("../model/walletTransactionSchema.js");
 
@@ -7,8 +8,9 @@ const getWalletByUserId = async (req, res) => {
     try {
         await connectDB();
         const { userId } = req.params;
-        const userExists = await User.exists({ _id: userId });
-        if (!userExists) {
+        const accountExists = await User.exists({ _id: userId })
+            || await Astrologer.exists({ $or: [{ accountId: userId }, { _id: userId }] });
+        if (!accountExists) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 

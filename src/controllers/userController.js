@@ -5,7 +5,7 @@ const { getAiChatResponse } = require("../middleware/AiChatResponse");
 const sendSMS = require("../middleware/services/twilioService");
 const { sendOtpEmail, sendAstrologerActivityEmail } = require("../middleware/services/emailService");
 const { ensureWallet } = require("../services/walletService");
-const { signAuthToken } = require("../services/authTokenService");
+const { signAuthToken, normalizeRoles } = require("../services/authTokenService");
 const Notification = require("../model/notificationSchema");
 const OtpChallenge = require("../model/otpChallengeSchema");
 const { getOtpIdentifier, generateOtp, hashOtp, otpMatches } = require("../services/otpService");
@@ -138,63 +138,59 @@ const verifyOTP = async (req, res) => {
             ].filter(Boolean)
         });
 
-        let astrologer = null;
-        if (email) {
-            const normalizedEmail = email.trim().toLowerCase();
-            astrologer = await Astrologer.findOne({ notificationEmail: normalizedEmail })
-                .select("+notificationEmail name userId")
-                .populate("userId", "email");
+        const contactFilter = email
+            ? { $or: [
+                { notificationEmail: email.trim().toLowerCase() },
+                { email: email.trim().toLowerCase() }
+            ] }
+            : phoneNumber ? { phoneNumber: String(phoneNumber).replace(/\s+/g, '') } : null;
+        let astrologer = contactFilter
+            ? await Astrologer.findOne(contactFilter)
+                .select("+notificationEmail +email +phoneNumber name userId accountId roles place dateOfBirth gender photo chat")
+                .populate("userId", "email roles")
+            : null;
 
-            if (!astrologer && user) {
-                astrologer = await Astrologer.findOne({ userId: user._id })
-                    .select("+notificationEmail name userId")
-                    .populate("userId", "email");
-            }
+        if (!astrologer && user && normalizeRoles(user.roles).includes("ASTROLOGER")) {
+            astrologer = await Astrologer.findOne({ $or: [{ accountId: user._id }, { userId: user._id }] })
+                .select("+notificationEmail +email +phoneNumber name userId accountId roles place dateOfBirth gender photo chat")
+                .populate("userId", "email roles");
         }
 
-        if (astrologer) {
-            const astrologerEmail = astrologer.notificationEmail || astrologer.userId?.email || email;
-            const token = signAuthToken(astrologer._id, "ASTROLOGER", astrologer._id);
+        if (user || astrologer) {
+            const accountRoles = normalizeRoles([
+                ...(user?.roles || []),
+                ...(astrologer?.roles || []),
+                ...(astrologer ? ["ASTROLOGER"] : user ? ["USER"] : [])
+            ]);
+            const accountId = astrologer?.accountId || user?._id || astrologer._id;
+            const astrologerId = astrologer?._id;
+
+            if (user) await ensureWallet(user._id);
+            const token = signAuthToken(accountId, accountRoles, astrologerId);
             if (!(await consumeOtpChallenge(res, storedData))) return;
+
+            const userData = user?.toObject ? user.toObject() : {
+                id: String(accountId),
+                name: astrologer?.name || "",
+                email: astrologer?.email || astrologer?.notificationEmail || astrologer?.userId?.email || email || "",
+                phone: astrologer?.phoneNumber || phoneNumber || "",
+                place: astrologer?.place || "",
+                dateOfBirth: astrologer?.dateOfBirth || "",
+                gender: astrologer?.gender || "",
+                photo: astrologer?.photo || ""
+            };
+            delete userData.role;
+            userData.roles = accountRoles;
+            userData.id = String(accountId);
+            if (astrologerId) userData.astrologerId = String(astrologerId);
 
             return res.json({
                 success: true,
                 data: {
                     token,
-                    userId: astrologer._id,
-                    role: "ASTROLOGER",
-                    astrologerId: astrologer._id,
-                    user: {
-                        id: astrologer._id.toString(),
-                        name: astrologer.name,
-                        email: astrologerEmail,
-                        role: "ASTROLOGER",
-                        astrologerId: astrologer._id.toString()
-                    },
-                    isNewUser: false
-                },
-                message: "Astrologer OTP verified successfully"
-            });
-        }
-
-        // 🔹 If user exists
-        if (user) {
-            await ensureWallet(user._id);
-            const normalizedRole = String(user.role || "USER").toUpperCase() === "ADMIN"
-                ? "ADMIN"
-                : "USER";
-            const token = signAuthToken(user._id, normalizedRole);
-            if (!(await consumeOtpChallenge(res, storedData))) return;
-            const userData = user.toObject ? user.toObject() : { ...user };
-            userData.role = normalizedRole;
-
-            return res.json({
-                success: true,
-                data: {
-                    token,
-                    userId: user._id,
-                    name: user.name,
-                    role: normalizedRole,
+                    userId: accountId,
+                    roles: accountRoles,
+                    astrologerId,
                     user: userData,
                     isNewUser: false
                 },
@@ -242,6 +238,18 @@ const getUserById = async (req, res) => {
         await connectDB();
         const { id } = req.params;
         const user = await User.findById(id);
+        if (!user) {
+            const astrologer = await Astrologer.findOne({ accountId: id })
+                .select("+email +phoneNumber +notificationEmail name roles place dateOfBirth gender photo astrologerApplicationStatus");
+            if (astrologer) {
+                const profile = astrologer.toObject();
+                profile.id = astrologer.accountId.toString();
+                profile.email = astrologer.email || astrologer.notificationEmail || "";
+                profile.phone = astrologer.phoneNumber || "";
+                profile.roles = normalizeRoles(astrologer.roles);
+                return res.json({ success: true, data: profile, message: "Astrologer profile fetched successfully" });
+            }
+        }
         
         if (!user) {
             return res.status(404).json({
@@ -279,8 +287,12 @@ const createUser = async (req, res) => {
             photo,
             token
         };
+        const userUpdate = {
+            $set: userData,
+            $setOnInsert: { roles: ["USER"] }
+        };
         if (accountType === "ASTROLOGER") {
-            userData.astrologerApplicationStatus = "PENDING";
+            userUpdate.$set.astrologerApplicationStatus = "PENDING";
         }
 
         if (!name || !dateOfBirth || !gender) {
@@ -296,16 +308,16 @@ const createUser = async (req, res) => {
         if (phoneNumber) {
             user = await User.findOneAndUpdate(
                 { phoneNumber },
-                userData,
-                { new: true, upsert: true }
+                userUpdate,
+                { new: true, upsert: true, setDefaultsOnInsert: true }
             );
 
         }
         else if(email) {
             user = await User.findOneAndUpdate(
                 { email },
-                userData,
-                { new: true, upsert: true }
+                userUpdate,
+                { new: true, upsert: true, setDefaultsOnInsert: true }
             );
         }
         else {
@@ -321,8 +333,8 @@ const createUser = async (req, res) => {
             success: true,
             data: {
                 userId: user._id,
-                token: signAuthToken(user._id, "USER"),
-                user: user
+                token: signAuthToken(user._id, user.roles || ["USER"]),
+                user: { ...user.toObject(), roles: normalizeRoles(user.roles) }
             },
             message: "User registered successfully"
         });
@@ -343,7 +355,24 @@ const updateUser = async (req, res) => {
                 .filter(field => req.body[field] !== undefined)
                 .map(field => [field, req.body[field]])
         );
-        const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true });
+        let user = await User.findByIdAndUpdate(req.params.id, updates, { new: true });
+        if (!user) {
+            const astrologerUpdates = { ...updates };
+            if (updates.email) astrologerUpdates.notificationEmail = updates.email.trim().toLowerCase();
+            user = await Astrologer.findOneAndUpdate(
+                { accountId: req.params.id },
+                { $set: astrologerUpdates },
+                { new: true }
+            ).select("+email +phoneNumber +notificationEmail name roles place dateOfBirth gender photo");
+            if (user) {
+                const profile = user.toObject();
+                profile.id = user.accountId.toString();
+                profile.email = user.email || user.notificationEmail || "";
+                profile.phone = user.phoneNumber || "";
+                profile.roles = normalizeRoles(user.roles);
+                return res.json({ success: true, data: profile, message: "Astrologer profile updated" });
+            }
+        }
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -405,6 +434,39 @@ const googleLogin = async (req, res) => {
         let user = await User.findOne({ email });
 
         if (!user) {
+            const astrologer = await Astrologer.findOne({
+                $or: [
+                    { email: email.trim().toLowerCase() },
+                    { notificationEmail: email.trim().toLowerCase() }
+                ]
+            }).select("+email +notificationEmail name roles accountId astrologerApplicationStatus photo _id");
+            if (astrologer) {
+                const accountId = astrologer.accountId || astrologer._id;
+                const roles = normalizeRoles(astrologer.roles);
+                const sessionUser = {
+                    id: accountId.toString(),
+                    name: astrologer.name,
+                    email: astrologer.email || astrologer.notificationEmail || email,
+                    photo: astrologer.photo || photo,
+                    roles,
+                    astrologerId: astrologer._id.toString()
+                };
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        token: signAuthToken(accountId, roles, astrologer._id),
+                        userId: accountId,
+                        roles,
+                        astrologerId: astrologer._id,
+                        user: sessionUser,
+                        isNewUser: false
+                    },
+                    message: "Google login successful"
+                });
+            }
+        }
+
+        if (!user) {
             // Create new user with Google data
             user = await User.create({
                 name: name || "Google User",
@@ -428,11 +490,13 @@ const googleLogin = async (req, res) => {
         res.status(200).json({
             success: true,
             data: {
-                token: signAuthToken(user._id, String(user.role || "USER").toUpperCase() === "ADMIN" ? "ADMIN" : "USER"),
+                token: signAuthToken(user._id, user.roles || ["USER"]),
                 name: user.name,
                 email: user.email,
                 photo: user.photo,
                 userId: user._id,
+                roles: normalizeRoles(user.roles),
+                user: { ...user.toObject(), roles: normalizeRoles(user.roles) },
                 isNewUser: !user.dateOfBirth // Consider user new if they haven't set birth details
             },
             message: "Google login successful"
