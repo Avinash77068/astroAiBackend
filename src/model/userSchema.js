@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 
 const chatSchema = new mongoose.Schema({
+    // Optional for legacy chat entries created before conversations were scoped.
+    astrologerId: { type: mongoose.Schema.Types.ObjectId, ref: "Astrologer" },
     message: { type: String },
     sender: { type: String },
     astroResponse: { type: String },

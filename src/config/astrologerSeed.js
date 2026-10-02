@@ -1,22 +1,113 @@
 const profiles = [
-    { name: "Pandit Rajesh Sharma", type: "Vedic Astrology", price: "₹25/min", experience: "12 years", specialization: ["Birth chart", "Horoscope"], status: "ONLINE" },
-    { name: "Acharya Meera Joshi", type: "Tarot", price: "₹30/min", experience: "8 years", specialization: ["Tarot", "Relationships"], status: "ONLINE" },
-    { name: "Guru Anil Mishra", type: "Numerology", price: "₹20/min", experience: "10 years", specialization: ["Numerology", "Career"], status: "ONLINE" },
-    { name: "Dr. Kavita Rao", type: "Vastu", price: "₹40/min", experience: "15 years", specialization: ["Vastu", "Finance"], status: "BUSY" },
-    { name: "Swami Prakash Tiwari", type: "Vedic Astrology", price: "₹35/min", experience: "20 years", specialization: ["Marriage", "Health"], status: "ONLINE" },
-    { name: "Jyotishi Neha Verma", type: "Palmistry", price: "₹22/min", experience: "6 years", specialization: ["Palmistry", "Love"], status: "OFFLINE" },
-    { name: "Pandit Suresh Pandey", type: "Vedic Astrology", price: "₹28/min", experience: "14 years", specialization: ["Career", "Education"], status: "ONLINE" },
-    { name: "Acharya Sunita Devi", type: "Tarot", price: "₹18/min", experience: "5 years", specialization: ["Tarot", "Mental health"], status: "OFFLINE" }
+    {
+        name: "Anandan",
+        type: "Vedic Astrology",
+        price: "₹25/min",
+        experience: "8 years",
+        languages: ["English", "Tamil", "Kannada", "Hindi"],
+        specialization: ["Vedic", "Remedies", "Predictions"],
+        profileUrl: "https://astrotalk.com/best-astrologer/anandan",
+        description: "External AstroTalk profile. Listed for Vedic astrology, remedies, and predictions. Availability is managed on AstroTalk."
+    },
+    {
+        name: "Rajish",
+        type: "Vedic Astrology",
+        price: "₹20/min",
+        experience: "4 years",
+        languages: ["English", "Hindi", "Sanskrit"],
+        specialization: ["Vedic", "Remedies", "Predictions"],
+        profileUrl: "https://astrotalk.com/best-astrologer/rajish",
+        description: "External AstroTalk profile. Listed for Vedic astrology, remedies, and predictions. Availability is managed on AstroTalk."
+    },
+    {
+        name: "Harikishan",
+        type: "Vedic Astrology",
+        price: "₹17/min",
+        experience: "4 years",
+        languages: ["Hindi"],
+        specialization: ["Vedic", "Vastu", "Remedies", "Predictions"],
+        profileUrl: "https://astrotalk.com/best-astrologer/harikishan",
+        description: "External AstroTalk profile. Listed for Vedic astrology, Vastu, remedies, and predictions. Availability is managed on AstroTalk."
+    },
+    {
+        name: "Srinath",
+        type: "Vedic Astrology",
+        price: "₹57/min",
+        experience: "9 years",
+        languages: ["English", "Hindi"],
+        specialization: ["Vedic", "Numerology", "Vastu", "Face Reading", "Remedies", "Predictions"],
+        profileUrl: "https://astrotalk.com/best-astrologer/Srinath",
+        description: "External AstroTalk profile. Listed for Vedic astrology, numerology, Vastu, and face reading. Availability is managed on AstroTalk."
+    },
+    {
+        name: "Mahinath",
+        type: "Vedic Astrology",
+        price: "₹14/min",
+        experience: "9 years",
+        languages: ["Hindi"],
+        specialization: ["Vedic", "Life Coach", "Remedies", "Predictions"],
+        profileUrl: "https://astrotalk.com/best-astrologer/mahinath",
+        description: "External AstroTalk profile. Listed for Vedic astrology and life coaching. Availability is managed on AstroTalk."
+    },
+    {
+        name: "Svaminath",
+        type: "Vedic Astrology",
+        price: "₹35/min",
+        experience: "5 years",
+        languages: ["Hindi", "English"],
+        specialization: ["Vedic", "Nadi", "Vastu", "Prashana", "Palmistry", "Face Reading", "Remedies", "Predictions"],
+        profileUrl: "https://astrotalk.com/best-astrologer/svaminath",
+        description: "External AstroTalk profile. Listed for Vedic, Nadi, Vastu, Prashana, and palmistry. Availability is managed on AstroTalk."
+    },
+    {
+        name: "Gaurav",
+        type: "Vedic Astrology",
+        price: "₹53/min",
+        experience: "26 years",
+        languages: ["English", "Hindi"],
+        specialization: ["Vedic", "Tarot", "Palmistry", "Face Reading", "Remedies", "Predictions"],
+        profileUrl: "https://astrotalk.com/best-astrologer/gaurav",
+        description: "External AstroTalk profile. Listed for Vedic astrology, Tarot, palmistry, and face reading. Availability is managed on AstroTalk."
+    },
+    {
+        name: "Ramlakhan",
+        type: "Vedic Astrology",
+        price: "₹18/min",
+        experience: "23 years",
+        languages: ["Hindi"],
+        specialization: ["Vedic", "Nadi", "Vastu", "Remedies", "Predictions"],
+        profileUrl: "https://astrotalk.com/best-astrologer/ramlakhan",
+        description: "External AstroTalk profile. Listed for Vedic, Nadi, Vastu, and remedies. Availability is managed on AstroTalk."
+    },
+    {
+        name: "Eeswaran",
+        type: "Vedic Astrology",
+        price: "₹16/min",
+        experience: "4 years",
+        languages: ["English", "Tamil"],
+        specialization: ["Vedic", "Remedies", "Predictions"],
+        profileUrl: "https://astrotalk.com/best-astrologer/eeswaran",
+        description: "External AstroTalk profile. Listed for Vedic astrology, remedies, and predictions. Availability is managed on AstroTalk."
+    },
+    {
+        name: "Ishrith",
+        type: "Vedic Astrology",
+        price: "₹25/min",
+        experience: "6 years",
+        languages: ["Hindi", "Marathi"],
+        specialization: ["Vedic", "Remedies", "Predictions"],
+        profileUrl: "https://astrotalk.com/best-astrologer/ishrith",
+        description: "External AstroTalk profile. Listed for Vedic astrology, remedies, and predictions. Availability is managed on AstroTalk."
+    }
 ];
 
 module.exports = profiles.map((profile, index) => ({
     ...profile,
     astrologerId: index + 1,
-    description: `${profile.name} offers guidance in ${profile.type}.`,
-    rating: +(4.2 + ((index * 7) % 8) / 10).toFixed(1),
-    reviews: 40 + index * 17,
-    verified: true,
-    image: `https://i.pravatar.cc/200?img=${index + 11}`,
-    languages: ["Hindi", "English"],
+    rating: 0,
+    reviews: 0,
+    verified: false,
+    image: "",
+    status: "OFFLINE",
     sessionType: "CHAT"
 }));

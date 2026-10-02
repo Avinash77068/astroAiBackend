@@ -1,4 +1,6 @@
 const User = require("../model/userSchema");
+const Astrologer = require("../model/astrologerSchema");
+const mongoose = require("mongoose");
 const { getAiChatResponse } = require("../middleware/AiChatResponse");
 const sendSMS = require("../middleware/services/twilioService");
 const sendEmail = require("../middleware/services/emailService");
@@ -360,14 +362,22 @@ const googleLogin = async (req, res) => {
 const chatResponse = async (req, res) => {
     try {
         await connectDB();
-        const { userId, message } = req.body;
+        const { userId, astrologerId, message } = req.body;
 
-        if (!userId || !message) {
+        if (!userId || !astrologerId || !message) {
             return res.status(400).json({
                 success: false,
-                message: "userId and message are required"
+                message: "userId, astrologerId, and message are required"
             });
         }
+
+        if (!mongoose.isValidObjectId(astrologerId)) {
+            return res.status(400).json({
+                success: false,
+                message: "astrologerId must be a valid astrologer id"
+            });
+        }
+        const normalizedAstrologerId = new mongoose.Types.ObjectId(astrologerId).toString();
 
         const user = await User.findById(userId);
 
@@ -375,6 +385,14 @@ const chatResponse = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: "User not found"
+            });
+        }
+
+        const astrologerExists = await Astrologer.exists({ _id: normalizedAstrologerId });
+        if (!astrologerExists) {
+            return res.status(404).json({
+                success: false,
+                message: "Astrologer not found"
             });
         }
 
@@ -386,26 +404,20 @@ const chatResponse = async (req, res) => {
             phoneNumber: user.phoneNumber
         };
 
-        const astroResponse = await getAiChatResponse(message, user.chat, userDetails);
-        if(!astroResponse || astroResponse === ""){
-            user.chat.push({
-                message: message,
-                sender: "user",
-                astroResponse: "Sorry, Unable to Understand Your Query",
-                timestamp: new Date()
-            });
-        }
-        else {
-            user.chat.push({
-                message: message,
-                sender: "user",
-                astroResponse: astroResponse,
-                timestamp: new Date()
-            });
+        const astrologerChat = user.chat.filter(
+            chat => chat.astrologerId?.toString() === normalizedAstrologerId
+        );
+        const generatedResponse = await getAiChatResponse(message, astrologerChat, userDetails);
+        const astroResponse = generatedResponse || "Sorry, Unable to Understand Your Query";
+        const chatEntry = {
+            astrologerId: normalizedAstrologerId,
+            message,
+            sender: "user",
+            astroResponse,
+            timestamp: new Date()
+        };
+        user.chat.push(chatEntry);
 
-        }
-
-        
         await user.save();
 
         return res.json({
@@ -415,6 +427,7 @@ const chatResponse = async (req, res) => {
                 message: message,
                 sender: "user",
                 astroResponse: astroResponse,
+                astrologerId: normalizedAstrologerId,
                 timestamp: user.chat[user.chat.length - 1].timestamp,
                 _id: user.chat[user.chat.length - 1]._id
             }
@@ -431,12 +444,28 @@ const chatResponse = async (req, res) => {
 const getChatHistory = async (req, res) => {
     try {
         await connectDB();
-        const { userId } = req.body;
+        const { userId, astrologerId } = req.body;
 
-        if (!userId) {
+        if (!userId || !astrologerId) {
             return res.status(400).json({
                 success: false,
-                message: "userId is required"
+                message: "userId and astrologerId are required"
+            });
+        }
+
+        if (!mongoose.isValidObjectId(astrologerId)) {
+            return res.status(400).json({
+                success: false,
+                message: "astrologerId must be a valid astrologer id"
+            });
+        }
+        const normalizedAstrologerId = new mongoose.Types.ObjectId(astrologerId).toString();
+
+        const astrologerExists = await Astrologer.exists({ _id: normalizedAstrologerId });
+        if (!astrologerExists) {
+            return res.status(404).json({
+                success: false,
+                message: "Astrologer not found"
             });
         }
 
@@ -450,7 +479,11 @@ const getChatHistory = async (req, res) => {
 
         return res.json({
             success: true,
-            data: { chatHistory: user.chat },
+            data: {
+                chatHistory: user.chat.filter(
+                    chat => chat.astrologerId?.toString() === normalizedAstrologerId
+                )
+            },
             message: "Chat history fetched successfully"
         });
     } catch (error) {

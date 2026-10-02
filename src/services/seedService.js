@@ -40,13 +40,13 @@ const seedRashis = async () => {
     return rashiCatalog.length;
 };
 
-// $setOnInsert so existing astrologers (and the chat history tied to them) are never overwritten.
+// Refresh seeded profile fields without changing user/session identifiers or chat history.
 const seedAstrologers = async () => {
     await Astrologer.bulkWrite(
         astrologerSeed.map(astrologer => ({
             updateOne: {
                 filter: { astrologerId: astrologer.astrologerId },
-                update: { $setOnInsert: astrologer },
+                update: { $set: astrologer },
                 upsert: true
             }
         }))

@@ -61,6 +61,11 @@ const astrologerSchema = new mongoose.Schema(
             default: ""
         },
 
+        profileUrl: {
+            type: String,
+            default: ""
+        },
+
         experience: {
             type: String
             // "5 years"
