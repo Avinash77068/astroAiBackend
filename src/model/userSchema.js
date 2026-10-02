@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
     dateOfBirth: { type: String, default: "" },
     gender: { type: String, default: "" },
     email: { type: String },
+    role: { type: String, enum: ["USER", "ASTROLOGER"], default: "USER" },
     password: { type: String },
     photo: { type: String },
     isGoogleLogin: { type: Boolean, default: false },

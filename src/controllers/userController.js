@@ -5,11 +5,28 @@ const { getAiChatResponse } = require("../middleware/AiChatResponse");
 const sendSMS = require("../middleware/services/twilioService");
 const { sendOtpEmail, sendAstrologerActivityEmail } = require("../middleware/services/emailService");
 const { ensureWallet } = require("../services/walletService");
-// In-memory OTP storage (use Redis in production)
-const otpStore = new Map();
+const { signAuthToken } = require("../services/authTokenService");
+const Notification = require("../model/notificationSchema");
+const OtpChallenge = require("../model/otpChallengeSchema");
+const { getOtpIdentifier, generateOtp, hashOtp, otpMatches } = require("../services/otpService");
 const connectDB = require("../database/db.js");
 const dotenv = require("dotenv");
 dotenv.config();
+
+const consumeOtpChallenge = async (res, storedData) => {
+    const consumedChallenge = await OtpChallenge.findOneAndDelete({
+        _id: storedData._id,
+        otpHash: storedData.otpHash
+    });
+    if (!consumedChallenge) {
+        res.status(400).json({
+            success: false,
+            message: "OTP not found or expired"
+        });
+        return false;
+    }
+    return true;
+};
 
 const sendOTP = async (req, res) => {
     try {
@@ -23,30 +40,41 @@ const sendOTP = async (req, res) => {
             });
         }
 
-        const key = phoneNumber || email;
-        const previousOtp = otpStore.get(key);
-        if (previousOtp?.resendAt > Date.now()) {
+        const identifier = getOtpIdentifier({ phoneNumber, email });
+        const previousOtp = await OtpChallenge.findOne({ identifier }).lean();
+        if (previousOtp?.resendAt > new Date()) {
             return res.status(429).json({
                 success: false,
                 message: "Please wait before requesting another code",
-                data: { retryAfterSeconds: Math.ceil((previousOtp.resendAt - Date.now()) / 1000) }
+                data: { retryAfterSeconds: Math.ceil((previousOtp.resendAt.getTime() - Date.now()) / 1000) }
             });
         }
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-        if (phoneNumber) {
-            await sendSMS(phoneNumber, otp);
-        } else {
-            await sendOtpEmail(email, otp);
-        }
-
+        const otp = generateOtp();
         const sentAt = Date.now();
-        otpStore.set(key, {
-            otp,
-            expiresAt: sentAt + 5 * 60 * 1000,
-            resendAt: sentAt + 60 * 1000
-        });
+        const otpHash = hashOtp(otp);
+        await OtpChallenge.findOneAndUpdate(
+            { identifier },
+            {
+                $set: {
+                    otpHash,
+                    expiresAt: new Date(sentAt + 5 * 60 * 1000),
+                    resendAt: new Date(sentAt + 60 * 1000)
+                }
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        try {
+            if (phoneNumber) {
+                await sendSMS(phoneNumber, otp);
+            } else {
+                await sendOtpEmail(email.trim().toLowerCase(), otp);
+            }
+        } catch (error) {
+            await OtpChallenge.deleteOne({ identifier, otpHash });
+            throw error;
+        }
 
         res.status(200).json({
             success: true,
@@ -77,8 +105,8 @@ const verifyOTP = async (req, res) => {
             });
         }
 
-        const key = phoneNumber || email;
-        const storedData = otpStore.get(key);
+        const identifier = getOtpIdentifier({ phoneNumber, email });
+        const storedData = await OtpChallenge.findOne({ identifier }).select("+otpHash");
 
         if (!storedData) {
             return res.status(400).json({
@@ -87,25 +115,22 @@ const verifyOTP = async (req, res) => {
             });
         }
 
-        if (Date.now() > storedData.expiresAt) {
-            otpStore.delete(key);
+        if (Date.now() > storedData.expiresAt.getTime()) {
+            await OtpChallenge.deleteOne({ _id: storedData._id });
             return res.status(400).json({
                 success: false,
                 message: "OTP expired"
             });
         }
 
-        if (storedData.otp !== otp) {
+        if (!otpMatches(otp, storedData.otpHash)) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid OTP"
             });
         }
 
-        // OTP verified
-        otpStore.delete(key);
-
-        // 🔹 Check user existence (DO NOT CREATE)
+        // Check user and astrologer records without allowing a client-selected role.
         const user = await User.findOne({
             $or: [
                 phoneNumber ? { phoneNumber } : null,
@@ -113,13 +138,55 @@ const verifyOTP = async (req, res) => {
             ].filter(Boolean)
         });
 
-        // 🔹 If user exists
-        if (user) {
-            await ensureWallet(user._id);
+        let astrologer = null;
+        if (email) {
+            const normalizedEmail = email.trim().toLowerCase();
+            astrologer = await Astrologer.findOne({ notificationEmail: normalizedEmail })
+                .select("+notificationEmail name userId")
+                .populate("userId", "email");
+
+            if (!astrologer && user) {
+                astrologer = await Astrologer.findOne({ userId: user._id })
+                    .select("+notificationEmail name userId")
+                    .populate("userId", "email");
+            }
+        }
+
+        if (astrologer) {
+            const astrologerEmail = astrologer.notificationEmail || astrologer.userId?.email || email;
+            const token = signAuthToken(astrologer._id, "ASTROLOGER", astrologer._id);
+            if (!(await consumeOtpChallenge(res, storedData))) return;
+
             return res.json({
                 success: true,
                 data: {
-                    token: "jwt-token-" + user._id,
+                    token,
+                    userId: astrologer._id,
+                    role: "ASTROLOGER",
+                    astrologerId: astrologer._id,
+                    user: {
+                        id: astrologer._id.toString(),
+                        name: astrologer.name,
+                        email: astrologerEmail,
+                        role: "ASTROLOGER",
+                        astrologerId: astrologer._id.toString()
+                    },
+                    isNewUser: false
+                },
+                message: "Astrologer OTP verified successfully"
+            });
+        }
+
+        // 🔹 If user exists
+        if (user) {
+            await ensureWallet(user._id);
+            const token = signAuthToken(user._id, "USER");
+            if (!(await consumeOtpChallenge(res, storedData))) return;
+
+            return res.json({
+                success: true,
+                data: {
+                    token,
                     userId: user._id,
                     name: user.name,
                     user: user,
@@ -130,6 +197,7 @@ const verifyOTP = async (req, res) => {
         }
 
         // 🔹 If user DOES NOT exist (new user)
+        if (!(await consumeOtpChallenge(res, storedData))) return;
         return res.json({
             success: true,
             data: {
@@ -244,7 +312,7 @@ const createUser = async (req, res) => {
             success: true,
             data: {
                 userId: user._id,
-                token: "dummy-token-" + user._id,
+                token: signAuthToken(user._id, "USER"),
                 user: user
             },
             message: "User registered successfully"
@@ -345,7 +413,7 @@ const googleLogin = async (req, res) => {
         res.status(200).json({
             success: true,
             data: {
-                token: "jwt-token-" + user._id,
+                token: signAuthToken(user._id, "USER"),
                 name: user.name,
                 email: user.email,
                 photo: user.photo,
@@ -432,6 +500,17 @@ const chatResponse = async (req, res) => {
         user.chat.push(chatEntry);
 
         await user.save();
+
+        Notification.create({
+            recipientId: astrologer._id,
+            recipientRole: "ASTROLOGER",
+            type: "CHAT_MESSAGE",
+            title: "New customer message",
+            body: `${user.name || "A customer"} sent you a message.`,
+            data: { customerId: user._id.toString() }
+        }).catch(error => {
+            console.error("Astrologer in-app notification failed:", error.message);
+        });
 
         const astrologerEmail = astrologer.notificationEmail || astrologer.userId?.email;
         if (astrologerEmail) {
