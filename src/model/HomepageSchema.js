@@ -89,6 +89,8 @@ const appActionSchema = new mongoose.Schema(
 const appConfigSchema = new mongoose.Schema(
     {
         appName: { type: String, required: true },
+        appDescription: { type: String, default: "" },
+        logo: { type: String, default: "" },
         notificationCount: { type: String, default: "0" },
         webClientId: { type: String, required: true },
         userProfile: { type: userProfileSchema, required: true },
@@ -107,9 +109,9 @@ const appConfigSchema = new mongoose.Schema(
 const consultFilters = new mongoose.Schema(
     {
         label: { type: String, required: true },
-        iconKey: { type: String, required: true },
-        image: { type: String, required: true },
-        route: { type: String, required: false } 
+        iconKey: { type: String, default: null },
+        image: { type: String, default: null },
+        route: { type: String, required: false }
     },
     { _id: false }
 )

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "seed:data": "node seedDatabase.js"
+    "seed:data": "node seedDatabase.js",
+    "seed:catalogs": "node scripts/seedCatalogs.js"
   },
   "keywords": [
     "astrology",
