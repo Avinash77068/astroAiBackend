@@ -1,6 +1,8 @@
 
 const AiFeature = require("../model/aiFeatureSchema");
 const connectDB = require("../database/db.js");
+const aiFeatureCatalog = require("../config/aiFeatureCatalog.js");
+const { getAiChatResponse } = require("../middleware/AiChatResponse");
 const { generateKundliReport } = require('../services/kundliService');
 const { generateVedicInterpretation } = require('../services/vedicAstrologyService');
 const {
@@ -13,6 +15,61 @@ const {
     analyzeMentalHealthAI
 } = require('../services/aiAnalysisServices');
 connectDB();
+const getAiFeatureCatalog = (req, res) => {
+    return res.json({
+        success: true,
+        data: { features: aiFeatureCatalog },
+        message: "AI feature catalog fetched successfully"
+    });
+};
+
+const askAiFeature = async (req, res) => {
+    const feature = aiFeatureCatalog.find(item => item.id === req.body.featureId);
+    if (!feature || feature.id === "kundli") {
+        return res.status(400).json({
+            success: false,
+            message: "Choose a supported guidance category"
+        });
+    }
+
+    const question = typeof req.body.question === "string" ? req.body.question.trim() : "";
+    if (!question) {
+        return res.status(400).json({
+            success: false,
+            message: "question is required"
+        });
+    }
+    if (question.length > 3000) {
+        return res.status(400).json({
+            success: false,
+            message: "question must be 3000 characters or fewer"
+        });
+    }
+
+    try {
+        const prompt = [
+            `The user chose the ${feature.title} guidance category.`,
+            "Respond in Hindi with compassionate, practical, non-deterministic astrology guidance.",
+            "Treat astrology as traditional guidance, not a guaranteed prediction.",
+            `User's question: ${question}`
+        ].join("\n");
+        const answer = await getAiChatResponse(prompt);
+
+        return res.json({
+            success: true,
+            data: { featureId: feature.id, answer },
+            message: "Guidance generated successfully"
+        });
+    } catch (error) {
+        console.error("AI feature question error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Unable to generate guidance",
+            error: error.message
+        });
+    }
+};
+
 const analyzeCareer = async (req, res) => {
     try {
         const { currentJob, experience, skills, goals } = req.body;
@@ -290,4 +347,4 @@ const analyzeLove = async (req, res) => {
     }
 };
 
-module.exports = { analyzeCareer, analyzeHealth, analyzeEducation, analyzeFinance, analyzeMatching, analyzeMentalHealth, generateKundli, analyzeAstrology, analyzeLove }
+module.exports = { getAiFeatureCatalog, askAiFeature, analyzeCareer, analyzeHealth, analyzeEducation, analyzeFinance, analyzeMatching, analyzeMentalHealth, generateKundli, analyzeAstrology, analyzeLove }

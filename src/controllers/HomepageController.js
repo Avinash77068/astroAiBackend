@@ -1,6 +1,7 @@
 const connectDB = require("../database/db.js");
 const Home = require("../model/HomepageSchema");
 const dotenv = require("dotenv");
+const defaultSidebarItems = require("../config/sidebarMenu.js");
 dotenv.config();
 const getHomepageData = async (req, res) => {
     try {
@@ -211,6 +212,9 @@ const createHomepageData = async (req, res) => {
                             image: "https://cdn-icons-png.flaticon.com/512/2966/2966486.png"
                         }
                     ],
+                    sidebarConfig: {
+                        sidebarItems: defaultSidebarItems
+                    },
                     categories: [
                         "Reports",
                         "Spiritual",

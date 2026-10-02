@@ -421,6 +421,41 @@ const chatResponse = async (req, res) => {
         });
     }
 }
+
+const getChatHistory = async (req, res) => {
+    try {
+        await connectDB();
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "userId is required"
+            });
+        }
+
+        const user = await User.findById(userId).select("chat");
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.json({
+            success: true,
+            data: { chatHistory: user.chat },
+            message: "Chat history fetched successfully"
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Error fetching chat history",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getAllUsers,
     createUser,
@@ -430,5 +465,6 @@ module.exports = {
     verifyOTP,
     getUserById,
     chatResponse,
+    getChatHistory,
     googleLogin
 };

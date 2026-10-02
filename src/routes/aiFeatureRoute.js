@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { analyzeCareer,analyzeHealth,analyzeEducation,analyzeFinance,analyzeMatching,analyzeMentalHealth,generateKundli,analyzeAstrology,analyzeLove } = require("../controllers/aiFearuteController");
+const { getAiFeatureCatalog, askAiFeature, analyzeCareer,analyzeHealth,analyzeEducation,analyzeFinance,analyzeMatching,analyzeMentalHealth,generateKundli,analyzeAstrology,analyzeLove } = require("../controllers/aiFearuteController");
 
+router.get("/", getAiFeatureCatalog);
+router.post("/ask", askAiFeature);
 router.post("/analyze-career", analyzeCareer );
 router.post("/analyze-health", analyzeHealth );
 router.post("/analyze-education", analyzeEducation );

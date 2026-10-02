@@ -97,6 +97,25 @@ const consultFilters = new mongoose.Schema(
     { _id: false }
 )
 
+const sidebarItemSchema = new mongoose.Schema(
+    {
+        title: { type: String, required: true, trim: true },
+        icon: { type: String, required: true, trim: true },
+        route: { type: String, required: true, trim: true },
+        isActive: { type: Boolean, default: true },
+        requiresAuth: { type: Boolean, default: false },
+        order: { type: Number, required: true }
+    },
+    { _id: false }
+);
+
+const sidebarConfigSchema = new mongoose.Schema(
+    {
+        sidebarItems: { type: [sidebarItemSchema], default: [] }
+    },
+    { _id: false }
+);
+
 /* Main Home Schema */
 const homeSchema = new mongoose.Schema(
     {
@@ -113,7 +132,8 @@ const homeSchema = new mongoose.Schema(
             section2025Items: { type: [section2025ItemSchema], default: [] },
             categories: { type: [String], default: [] },
             appConfig: { type: appConfigSchema, required: true },
-            consultFilters: { type: [consultFilters], default: [] }
+            consultFilters: { type: [consultFilters], default: [] },
+            sidebarConfig: { type: sidebarConfigSchema, default: () => ({}) }
         }
     },
     {
