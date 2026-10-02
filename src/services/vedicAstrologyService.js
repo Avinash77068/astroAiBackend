@@ -2,7 +2,7 @@ const axios = require('axios');
 
 const callOpenRouterForKundli = async (messages) => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500); // 2.5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
         const response = await axios.post(
@@ -10,9 +10,9 @@ const callOpenRouterForKundli = async (messages) => {
             {
                 model: process.env.OPENROUTER_MODEL,
                 messages: messages,
-                temperature: 0.4, 
-                max_tokens: 800, 
-                stream: false 
+                temperature: 0.4,
+                max_tokens: 800,
+                stream: false
             },
             {
                 headers: {
@@ -21,18 +21,27 @@ const callOpenRouterForKundli = async (messages) => {
                     'HTTP-Referer': 'https://astroai.app',
                     'X-Title': 'AstroAI Kundli'
                 },
-                signal: controller.signal
+                signal: controller.signal,
+                timeout: 30000
             }
         );
 
         clearTimeout(timeoutId);
-        return response.data.choices[0].message.content;
+
+        const content = response?.data?.choices?.[0]?.message?.content;
+        if (!content || typeof content !== 'string') {
+            console.error('Unexpected OpenRouter response shape:', JSON.stringify(response?.data || {}).slice(0, 1000));
+            throw new Error('OPENROUTER_EMPTY_RESPONSE');
+        }
+
+        return content;
     } catch (error) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
-            console.log('Vedic Astrology API call timed out after 2.5 seconds');
+            console.error('Vedic Astrology API call timed out after 30 seconds');
             throw new Error('API_TIMEOUT');
         }
+        console.error('OpenRouter error details:', error.response?.data || error.message || error);
         throw error;
     }
 };
@@ -120,11 +129,54 @@ Format your response in clear sections with specific insights. Be direct and con
             }
         ];
 
-        const interpretation = await callOpenRouterForKundli(messages);
+        let interpretation;
+        try {
+            interpretation = await callOpenRouterForKundli(messages);
+        } catch (apiError) {
+            console.error('OpenRouter API failed, using fallback Vedic interpretation:', apiError.message || apiError);
+            return {
+                personality: {
+                    likes: ['Stability and security', 'Practical achievements', 'Deep intellectual pursuits'],
+                    dislikes: ['Sudden changes', 'Superficial conversations', 'Disorganized environments'],
+                    traits: ['Analytical mind', 'Strong determination', 'Reserved nature', 'Loyal and committed']
+                },
+                career: {
+                    bestFields: ['Engineering', 'Finance', 'Research', 'Management'],
+                    strengths: ['Technical expertise', 'Problem-solving skills', 'Attention to detail'],
+                    challenges: ['Communication', 'Team leadership', 'Adaptability'],
+                    timing: ['Career growth in mid-20s', 'Leadership roles after 30']
+                },
+                love: {
+                    romanticNature: ['Loyal and committed', 'Values emotional security', 'Prefers stable relationships'],
+                    idealPartner: ['Understanding', 'Ambitious', 'Emotionally mature'],
+                    challenges: ['Expressing emotions', 'Opening up quickly'],
+                    marriageTiming: ['Late 20s to early 30s', 'After establishing career stability']
+                },
+                health: {
+                    strengths: ['Strong constitution', 'Good recovery ability'],
+                    vulnerabilities: ['Stress-related issues', 'Digestive problems'],
+                    recommendations: ['Regular exercise', 'Stress management techniques', 'Balanced diet']
+                },
+                finance: {
+                    wealthPotential: ['Good earning capacity', 'Long-term financial stability'],
+                    bestSources: ['Career earnings', 'Investments', 'Property'],
+                    cautions: ['Avoid impulsive spending', 'Plan for long-term goals']
+                },
+                spiritual: {
+                    karmicLessons: ['Learning to balance emotions', 'Developing flexibility'],
+                    spiritualPath: ['Meditation', 'Self-reflection', 'Service to others'],
+                    practices: ['Yoga', 'Mindfulness', 'Nature connection']
+                },
+                lifeEvents: {
+                    majorTurningPoints: ['Age 24-25', 'Age 30-32', 'Age 42-45'],
+                    opportunities: ['Career advancement', 'Relationship milestones'],
+                    challenges: ['Emotional growth', 'Life changes']
+                }
+            };
+        }
 
         let parsedInterpretation;
         try {
-            // Check if response is empty or undefined
             if (!interpretation || interpretation.trim() === '') {
                 console.error('Empty AI response for Vedic astrology');
                 throw new Error('Empty response from AI service');
@@ -133,7 +185,6 @@ Format your response in clear sections with specific insights. Be direct and con
             console.log('Raw AI Response length:', interpretation.length);
             console.log('Raw AI Response preview:', interpretation.substring(0, 200));
 
-            // Clean the response - remove markdown formatting if present
             let cleanedResponse = interpretation.trim();
 
             if (cleanedResponse.startsWith('```json')) {
@@ -142,13 +193,11 @@ Format your response in clear sections with specific insights. Be direct and con
                 cleanedResponse = cleanedResponse.replace(/```\n?/g, '');
             }
 
-            // Try to extract JSON using regex
             const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
                 parsedInterpretation = JSON.parse(jsonMatch[0]);
                 console.log('Successfully parsed JSON from regex match');
             } else {
-                // Try to parse the entire cleaned response
                 parsedInterpretation = JSON.parse(cleanedResponse);
                 console.log('Successfully parsed entire response as JSON');
             }
@@ -156,44 +205,43 @@ Format your response in clear sections with specific insights. Be direct and con
             console.error('JSON Parse Error:', parseError);
             console.error('Failed to parse response:', interpretation);
 
-            // Provide fallback structured response
             parsedInterpretation = {
                 personality: {
-                    likes: ["Stability and security", "Practical achievements", "Deep intellectual pursuits"],
-                    dislikes: ["Sudden changes", "Superficial conversations", "Disorganized environments"],
-                    traits: ["Analytical mind", "Strong determination", "Reserved nature", "Loyal and committed"]
+                    likes: ['Stability and security', 'Practical achievements', 'Deep intellectual pursuits'],
+                    dislikes: ['Sudden changes', 'Superficial conversations', 'Disorganized environments'],
+                    traits: ['Analytical mind', 'Strong determination', 'Reserved nature', 'Loyal and committed']
                 },
                 career: {
-                    bestFields: ["Engineering", "Finance", "Research", "Management"],
-                    strengths: ["Technical expertise", "Problem-solving skills", "Attention to detail"],
-                    challenges: ["Communication", "Team leadership", "Adaptability"],
-                    timing: ["Career growth in mid-20s", "Leadership roles after 30"]
+                    bestFields: ['Engineering', 'Finance', 'Research', 'Management'],
+                    strengths: ['Technical expertise', 'Problem-solving skills', 'Attention to detail'],
+                    challenges: ['Communication', 'Team leadership', 'Adaptability'],
+                    timing: ['Career growth in mid-20s', 'Leadership roles after 30']
                 },
                 love: {
-                    romanticNature: ["Loyal and committed", "Values emotional security", "Prefers stable relationships"],
-                    idealPartner: ["Understanding", "Ambitious", "Emotionally mature"],
-                    challenges: ["Expressing emotions", "Opening up quickly"],
-                    marriageTiming: ["Late 20s to early 30s", "After establishing career stability"]
+                    romanticNature: ['Loyal and committed', 'Values emotional security', 'Prefers stable relationships'],
+                    idealPartner: ['Understanding', 'Ambitious', 'Emotionally mature'],
+                    challenges: ['Expressing emotions', 'Opening up quickly'],
+                    marriageTiming: ['Late 20s to early 30s', 'After establishing career stability']
                 },
                 health: {
-                    strengths: ["Strong constitution", "Good recovery ability"],
-                    vulnerabilities: ["Stress-related issues", "Digestive problems"],
-                    recommendations: ["Regular exercise", "Stress management techniques", "Balanced diet"]
+                    strengths: ['Strong constitution', 'Good recovery ability'],
+                    vulnerabilities: ['Stress-related issues', 'Digestive problems'],
+                    recommendations: ['Regular exercise', 'Stress management techniques', 'Balanced diet']
                 },
                 finance: {
-                    wealthPotential: ["Good earning capacity", "Long-term financial stability"],
-                    bestSources: ["Career earnings", "Investments", "Property"],
-                    cautions: ["Avoid impulsive spending", "Plan for long-term goals"]
+                    wealthPotential: ['Good earning capacity', 'Long-term financial stability'],
+                    bestSources: ['Career earnings', 'Investments', 'Property'],
+                    cautions: ['Avoid impulsive spending', 'Plan for long-term goals']
                 },
                 spiritual: {
-                    karmicLessons: ["Learning to balance emotions", "Developing flexibility"],
-                    spiritualPath: ["Meditation", "Self-reflection", "Service to others"],
-                    practices: ["Yoga", "Mindfulness", "Nature connection"]
+                    karmicLessons: ['Learning to balance emotions', 'Developing flexibility'],
+                    spiritualPath: ['Meditation', 'Self-reflection', 'Service to others'],
+                    practices: ['Yoga', 'Mindfulness', 'Nature connection']
                 },
                 lifeEvents: {
-                    majorTurningPoints: ["Age 24-25", "Age 30-32", "Age 42-45"],
-                    opportunities: ["Career advancement", "Relationship milestones"],
-                    challenges: ["Emotional growth", "Life changes"]
+                    majorTurningPoints: ['Age 24-25', 'Age 30-32', 'Age 42-45'],
+                    opportunities: ['Career advancement', 'Relationship milestones'],
+                    challenges: ['Emotional growth', 'Life changes']
                 }
             };
 
