@@ -180,8 +180,13 @@ const verifyOTP = async (req, res) => {
         // 🔹 If user exists
         if (user) {
             await ensureWallet(user._id);
-            const token = signAuthToken(user._id, "USER");
+            const normalizedRole = String(user.role || "USER").toUpperCase() === "ADMIN"
+                ? "ADMIN"
+                : "USER";
+            const token = signAuthToken(user._id, normalizedRole);
             if (!(await consumeOtpChallenge(res, storedData))) return;
+            const userData = user.toObject ? user.toObject() : { ...user };
+            userData.role = normalizedRole;
 
             return res.json({
                 success: true,
@@ -189,7 +194,8 @@ const verifyOTP = async (req, res) => {
                     token,
                     userId: user._id,
                     name: user.name,
-                    user: user,
+                    role: normalizedRole,
+                    user: userData,
                     isNewUser: false
                 },
                 message: "OTP verified successfully"
@@ -260,7 +266,7 @@ const getUserById = async (req, res) => {
 const createUser = async (req, res) => {
     try {
         await connectDB();
-        const { name, place, dateOfBirth, gender, phoneNumber, email, isGoogleLogin, photo, token } = req.body;
+        const { name, place, dateOfBirth, gender, phoneNumber, email, isGoogleLogin, photo, token, accountType } = req.body;
 
         const userData = {
             name,
@@ -273,6 +279,9 @@ const createUser = async (req, res) => {
             photo,
             token
         };
+        if (accountType === "ASTROLOGER") {
+            userData.astrologerApplicationStatus = "PENDING";
+        }
 
         if (!name || !dateOfBirth || !gender) {
             return res.status(400).json({
@@ -328,7 +337,13 @@ const createUser = async (req, res) => {
 const updateUser = async (req, res) => {
     try {
         await connectDB();
-        const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const allowedFields = ["name", "place", "dateOfBirth", "gender", "phoneNumber", "email", "photo"];
+        const updates = Object.fromEntries(
+            allowedFields
+                .filter(field => req.body[field] !== undefined)
+                .map(field => [field, req.body[field]])
+        );
+        const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true });
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -413,7 +428,7 @@ const googleLogin = async (req, res) => {
         res.status(200).json({
             success: true,
             data: {
-                token: signAuthToken(user._id, "USER"),
+                token: signAuthToken(user._id, String(user.role || "USER").toUpperCase() === "ADMIN" ? "ADMIN" : "USER"),
                 name: user.name,
                 email: user.email,
                 photo: user.photo,

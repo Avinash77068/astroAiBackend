@@ -13,7 +13,7 @@ const authenticate = (req, res, next) => {
     try {
         const claims = jwt.verify(authorization.slice(7), process.env.JWT_SECRET);
         const role = typeof claims.role === 'string' ? claims.role.toUpperCase() : '';
-        if (!claims.sub || !['USER', 'ASTROLOGER'].includes(role)) {
+        if (!claims.sub || !['USER', 'ASTROLOGER', 'ADMIN'].includes(role)) {
             return res.status(401).json({ success: false, message: 'Invalid authentication token' });
         }
 

@@ -6,7 +6,7 @@ const signAuthToken = (id, role = 'USER', astrologerId) => {
     }
 
     const normalizedRole = String(role).toUpperCase();
-    if (!['USER', 'ASTROLOGER'].includes(normalizedRole)) {
+    if (!['USER', 'ASTROLOGER', 'ADMIN'].includes(normalizedRole)) {
         throw new Error('Cannot issue an authentication token for an unsupported role');
     }
 

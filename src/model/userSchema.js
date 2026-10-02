@@ -16,7 +16,15 @@ const userSchema = new mongoose.Schema({
     dateOfBirth: { type: String, default: "" },
     gender: { type: String, default: "" },
     email: { type: String },
-    role: { type: String, enum: ["USER", "ASTROLOGER"], default: "USER" },
+    role: { type: String, enum: ["USER", "ASTROLOGER", "ADMIN"], default: "USER" },
+    astrologerApplicationStatus: {
+        type: String,
+        enum: ["NOT_APPLIED", "PENDING", "APPROVED", "REJECTED"],
+        default: "NOT_APPLIED",
+        index: true
+    },
+    astrologerApplicationReviewedAt: { type: Date },
+    astrologerApplicationReviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     password: { type: String },
     photo: { type: String },
     isGoogleLogin: { type: Boolean, default: false },

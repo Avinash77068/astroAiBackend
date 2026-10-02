@@ -7,6 +7,7 @@ const rashiRoutes = require("./rashiRoute");
 const walletRoutes = require("./walletRoute");
 const setupApiRoutes = require("./setupRoute");
 const notificationRoutes = require("./notificationRoute");
+const astrologerApplicationRoutes = require("./astrologerApplicationRoute");
 
 const setupRoutes = (app) => {
     app.use("/api/homepage", homepageRoutes);
@@ -18,6 +19,7 @@ const setupRoutes = (app) => {
     app.use("/api/wallet", walletRoutes);
     app.use("/api/setup", setupApiRoutes);
     app.use("/api/notifications", notificationRoutes);
+    app.use("/api/admin/astrologer-applications", astrologerApplicationRoutes);
 };
 
 module.exports = setupRoutes;
