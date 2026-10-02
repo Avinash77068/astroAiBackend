@@ -30,6 +30,74 @@ function getNakshatra(longitude) {
 }
 
 // Get Tropical Longitude
+function normalizeTimeOfBirth(timeOfBirth) {
+    if (!timeOfBirth) return '12:00';
+
+    const value = String(timeOfBirth).trim();
+    if (!value) return '12:00';
+
+    if (/^\d{1,2}:\d{2}(?::\d{2})?$/.test(value)) {
+        const [hours, minutes] = value.split(':');
+        return `${String(parseInt(hours, 10)).padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+    }
+
+    const match = value.match(/^(\d{1,2}):(\d{2})\s*([AP]M)$/i);
+    if (match) {
+        let hours = parseInt(match[1], 10);
+        const minutes = match[2];
+        const modifier = match[3].toUpperCase();
+
+        if (modifier === 'AM' && hours === 12) hours = 0;
+        if (modifier === 'PM' && hours !== 12) hours += 12;
+
+        return `${String(hours).padStart(2, '0')}:${minutes}`;
+    }
+
+    throw new Error(`Invalid timeOfBirth format: ${timeOfBirth}`);
+}
+
+function buildAstroDate(dateOfBirth, timeOfBirth) {
+    if (dateOfBirth instanceof Date && !Number.isNaN(dateOfBirth.getTime())) {
+        return dateOfBirth;
+    }
+
+    if (typeof dateOfBirth === 'number' && Number.isFinite(dateOfBirth)) {
+        return new Date(dateOfBirth);
+    }
+
+    if (!dateOfBirth) {
+        throw new Error('dateOfBirth is required');
+    }
+
+    const cleanDate = String(dateOfBirth).trim();
+    const normalizedTime = normalizeTimeOfBirth(timeOfBirth);
+
+    const candidates = [
+        `${cleanDate}T${normalizedTime}:00`,
+        `${cleanDate} ${normalizedTime}:00`,
+        `${cleanDate}T${normalizedTime}`,
+        cleanDate,
+    ];
+
+    for (const value of candidates) {
+        const parsed = new Date(value);
+        if (!Number.isNaN(parsed.getTime())) {
+            return parsed;
+        }
+    }
+
+    const ddmmyyyy = cleanDate.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+    if (ddmmyyyy) {
+        const [, day, month, year] = ddmmyyyy;
+        const parsed = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${normalizedTime}:00`);
+        if (!Number.isNaN(parsed.getTime())) {
+            return parsed;
+        }
+    }
+
+    throw new Error(`Invalid dateOfBirth format: ${dateOfBirth}`);
+}
+
 function getPlanetLongitude(date, body) {
     const time = new Astronomy.AstroTime(date);
     
@@ -46,9 +114,7 @@ function getPlanetLongitude(date, body) {
 }
 
 async function generateKundliReport({ dateOfBirth, timeOfBirth }) {
-
-    // ⚠ Important: Use UTC format properly
-    const date = new Date(`${dateOfBirth}T${timeOfBirth}:00`);
+    const date = buildAstroDate(dateOfBirth, timeOfBirth);
 
     const bodies = {
         Sun: Astronomy.Body.Sun,
