@@ -1,7 +1,8 @@
 
 const AiFeature = require("../model/aiFeatureSchema");
+const AiFeatureConfig = require("../model/AiFeatureConfig");
+const User = require("../model/userSchema");
 const connectDB = require("../database/db.js");
-const aiFeatureCatalog = require("../config/aiFeatureCatalog.js");
 const { getAiChatResponse } = require("../middleware/AiChatResponse");
 const { generateKundliReport } = require('../services/kundliService');
 const { generateVedicInterpretation } = require('../services/vedicAstrologyService');
@@ -14,39 +15,48 @@ const {
     analyzeMatchingAI,
     analyzeMentalHealthAI
 } = require('../services/aiAnalysisServices');
-connectDB();
-const getAiFeatureCatalog = (req, res) => {
-    return res.json({
-        success: true,
-        data: { features: aiFeatureCatalog },
-        message: "AI feature catalog fetched successfully"
-    });
+const getAiFeatureCatalog = async (req, res) => {
+    try {
+        await connectDB();
+        const features = await AiFeatureConfig.find({ isActive: true })
+            .sort({ order: 1 })
+            .select("id title endpoint iconKey backgroundColor fields order")
+            .lean();
+        return res.json({
+            success: true,
+            data: { features },
+            message: "AI feature catalog fetched successfully"
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: "Unable to load AI features" });
+    }
 };
 
 const askAiFeature = async (req, res) => {
-    const feature = aiFeatureCatalog.find(item => item.id === req.body.featureId);
-    if (!feature || feature.id === "kundli") {
-        return res.status(400).json({
-            success: false,
-            message: "Choose a supported guidance category"
-        });
-    }
-
-    const question = typeof req.body.question === "string" ? req.body.question.trim() : "";
-    if (!question) {
-        return res.status(400).json({
-            success: false,
-            message: "question is required"
-        });
-    }
-    if (question.length > 3000) {
-        return res.status(400).json({
-            success: false,
-            message: "question must be 3000 characters or fewer"
-        });
-    }
-
     try {
+        await connectDB();
+        const feature = await AiFeatureConfig.findOne({ id: req.body.featureId, isActive: true }).lean();
+        if (!feature || feature.id === "kundli") {
+            return res.status(400).json({ success: false, message: "Choose a supported guidance category" });
+        }
+
+        const question = typeof req.body.question === "string" ? req.body.question.trim() : "";
+        if (!question) {
+            return res.status(400).json({ success: false, message: "question is required" });
+        }
+        if (question.length > 3000) {
+            return res.status(400).json({ success: false, message: "question must be 3000 characters or fewer" });
+        }
+
+        const userId = req.body.userId;
+        if (!userId) {
+            return res.status(400).json({ success: false, message: "userId is required to save guidance" });
+        }
+        const userExists = await User.exists({ _id: userId });
+        if (!userExists) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
         const prompt = [
             `The user chose the ${feature.title} guidance category.`,
             "Respond in Hindi with compassionate, practical, non-deterministic astrology guidance.",
@@ -54,6 +64,12 @@ const askAiFeature = async (req, res) => {
             `User's question: ${question}`
         ].join("\n");
         const answer = await getAiChatResponse(prompt);
+        await AiFeature.create({
+            userId: String(userId),
+            featureType: feature.id,
+            input: { question },
+            output: answer
+        });
 
         return res.json({
             success: true,

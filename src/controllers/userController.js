@@ -2,6 +2,7 @@ const User = require("../model/userSchema");
 const { getAiChatResponse } = require("../middleware/AiChatResponse");
 const sendSMS = require("../middleware/services/twilioService");
 const sendEmail = require("../middleware/services/emailService");
+const { ensureWallet } = require("../services/walletService");
 // In-memory OTP storage (use Redis in production)
 const otpStore = new Map();
 const connectDB = require("../database/db.js");
@@ -101,6 +102,7 @@ const verifyOTP = async (req, res) => {
 
         // 🔹 If user exists
         if (user) {
+            await ensureWallet(user._id);
             return res.json({
                 success: true,
                 data: {
@@ -223,6 +225,8 @@ const createUser = async (req, res) => {
             });
         }
 
+        await ensureWallet(user._id);
+
         res.status(201).json({
             success: true,
             data: {
@@ -322,6 +326,8 @@ const googleLogin = async (req, res) => {
             user.isGoogleLogin = isGoogleLogin || user.isGoogleLogin;
             await user.save();
         }
+
+        await ensureWallet(user._id);
 
         res.status(200).json({
             success: true,

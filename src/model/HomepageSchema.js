@@ -76,6 +76,15 @@ const userProfileSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const appActionSchema = new mongoose.Schema(
+    {
+        show: { type: Boolean, default: false },
+        buttonText: { type: String, required: true },
+        route: { type: String, default: "" }
+    },
+    { _id: false }
+);
+
 /* App Config Schema */
 const appConfigSchema = new mongoose.Schema(
     {
@@ -83,6 +92,14 @@ const appConfigSchema = new mongoose.Schema(
         notificationCount: { type: String, default: "0" },
         webClientId: { type: String, required: true },
         userProfile: { type: userProfileSchema, required: true },
+        showCallButton: {
+            type: appActionSchema,
+            default: () => ({ show: false, buttonText: "Call an astrologer" })
+        },
+        showFreeChatButton: {
+            type: appActionSchema,
+            default: () => ({ show: true, buttonText: "Chat with an astrologer", route: "/chat" })
+        },
         constants: { type: Object, required: true }
     },
     { _id: false }

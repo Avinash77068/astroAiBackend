@@ -3,10 +3,17 @@ const Home = require("../model/HomepageSchema");
 const dotenv = require("dotenv");
 const defaultSidebarItems = require("../config/sidebarMenu.js");
 dotenv.config();
+
 const getHomepageData = async (req, res) => {
     try {
         await connectDB();
         const homeData = await Home.findOne();
+        if (!homeData) {
+            return res.status(404).json({
+                success: false,
+                message: "Homepage configuration has not been seeded"
+            });
+        }
 
         res.status(200).json({
             success: true,
@@ -234,6 +241,15 @@ const createHomepageData = async (req, res) => {
                         userProfile: {
                             name: "Guest",
                             plan: "Basic"
+                        },
+                        showCallButton: {
+                            show: false,
+                            buttonText: "Call an astrologer"
+                        },
+                        showFreeChatButton: {
+                            show: true,
+                            buttonText: "Chat with an astrologer",
+                            route: "/chat"
                         },
                         constants: {
                             COLORS: {
