@@ -6,7 +6,7 @@ const callOpenRouter = async (messages) => {
         {
             model: process.env.OPENROUTER_MODEL,
             messages: messages,
-            temperature: 0.7,
+            temperature: 0.3,
             max_tokens: 500
         },
         {
