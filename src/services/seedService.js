@@ -7,6 +7,7 @@ const aiFeatureCatalog = require("../config/aiFeatureCatalog");
 const rashiCatalog = require("../config/rashiCatalog");
 const { getRashiAreas } = require("../config/rashiInsights");
 const astrologerSeed = require("../config/astrologerSeed");
+const { syncAstrologerUsers } = require("./astrologerSyncService");
 
 // Homepage (appConfig + sidebar + home sections) lives in one document and is reset to defaults.
 const seedHomepage = async () => {
@@ -61,7 +62,8 @@ const seedAll = async () => ({
     homepage: await seedHomepage(),
     aiFeatures: await seedAiFeatures(),
     rashis: await seedRashis(),
-    astrologers: await seedAstrologers()
+    astrologers: await seedAstrologers(),
+    syncedAstrologerUsers: await syncAstrologerUsers()
 });
 
 module.exports = { seedAll, seedHomepage, seedAiFeatures, seedRashis, seedAstrologers };
