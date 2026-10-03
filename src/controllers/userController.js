@@ -274,15 +274,18 @@ const getUserById = async (req, res) => {
 const createUser = async (req, res) => {
     try {
         await connectDB();
-        const { name, place, dateOfBirth, gender, phoneNumber, email, isGoogleLogin, photo, token, accountType } = req.body;
+        const { name, place, dateOfBirth, gender, isGoogleLogin, photo, token, accountType } = req.body;
+        // Blank values must stay unset: phoneNumber has a unique index and "" would collide between users.
+        const phoneNumber = typeof req.body.phoneNumber === "string" ? req.body.phoneNumber.trim() : req.body.phoneNumber;
+        const email = typeof req.body.email === "string" ? req.body.email.trim() : req.body.email;
 
         const userData = {
             name,
             place,
             dateOfBirth,
             gender,
-            phoneNumber,
-            email,
+            ...(phoneNumber ? { phoneNumber } : {}),
+            ...(email ? { email } : {}),
             isGoogleLogin,
             photo,
             token
