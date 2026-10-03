@@ -6,6 +6,7 @@ const sidebarRoutes = require("./sidebarRoute");
 const rashiRoutes = require("./rashiRoute");
 const walletRoutes = require("./walletRoute");
 const setupApiRoutes = require("./setupRoute");
+const astrologerChatRoutes = require("./astrologerChatRoute");
 const notificationRoutes = require("./notificationRoute");
 const astrologerApplicationRoutes = require("./astrologerApplicationRoute");
 
@@ -18,6 +19,7 @@ const setupRoutes = (app) => {
     app.use("/api/rashis", rashiRoutes);
     app.use("/api/wallet", walletRoutes);
     app.use("/api/setup", setupApiRoutes);
+    app.use("/api/astrologer-chat", astrologerChatRoutes);
     app.use("/api/notifications", notificationRoutes);
     app.use("/api/admin/astrologer-applications", astrologerApplicationRoutes);
 };

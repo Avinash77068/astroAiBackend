@@ -550,7 +550,7 @@ const chatResponse = async (req, res) => {
         }
 
         const astrologer = await Astrologer.findById(normalizedAstrologerId)
-            .select("name notificationEmail userId")
+            .select("name notificationEmail userId accountId")
             .populate("userId", "email");
         if (!astrologer) {
             return res.status(404).json({
@@ -558,6 +558,8 @@ const chatResponse = async (req, res) => {
                 message: "Astrologer not found"
             });
         }
+        // Astrologers with a real account reply themselves; only listed demo profiles get an AI reply.
+        const isHumanAstrologer = Boolean(astrologer.accountId);
 
         const userDetails = {
             name: user.name,
@@ -570,8 +572,8 @@ const chatResponse = async (req, res) => {
         const astrologerChat = user.chat.filter(
             chat => chat.astrologerId?.toString() === normalizedAstrologerId
         );
-        const generatedResponse = await getAiChatResponse(message, astrologerChat, userDetails);
-        const astroResponse = generatedResponse || "Sorry, Unable to Understand Your Query";
+        const generatedResponse = isHumanAstrologer ? null : await getAiChatResponse(message, astrologerChat, userDetails);
+        const astroResponse = isHumanAstrologer ? null : generatedResponse || "Sorry, Unable to Understand Your Query";
         const chatEntry = {
             astrologerId: normalizedAstrologerId,
             message,
