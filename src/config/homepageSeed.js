@@ -193,9 +193,9 @@ const buildHomepageData = () => ({
             "Accessories"
         ],
         appConfig: {
-            appName: "AstroVaani",
+            appName: "AstroVani",
             appDescription: "Your AI-powered astrological companion",
-            logo: "https://cdn-icons-png.flaticon.com/512/2920/2920329.png",
+            logo: "", // empty = the app uses its bundled logo
             notificationCount: "6",
             webClientId: process.env.WEB_CLIENT_ID || "693439184836-s3rn40uaml3bfq2bdpteb53p8de38ji7.apps.googleusercontent.com",
             userProfile: {
