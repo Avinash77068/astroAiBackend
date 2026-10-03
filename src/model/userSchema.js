@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
         type: [{ type: String, enum: ["USER", "ASTROLOGER", "ADMIN"] }],
         default: ["USER"]
     },
+    role: { type: String, enum: ["USER", "ASTROLOGER", "ADMIN"] },
     astrologerApplicationStatus: {
         type: String,
         enum: ["NOT_APPLIED", "PENDING", "APPROVED", "REJECTED"],
@@ -36,6 +37,12 @@ const userSchema = new mongoose.Schema({
     chat: [chatSchema],
 }, {
     timestamps: true
+});
+
+userSchema.post("init", function foldLegacyRole(doc) {
+    if (doc.role && !doc.roles.includes(doc.role)) {
+        doc.roles.push(doc.role);
+    }
 });
 
 module.exports = mongoose.model("User", userSchema);
