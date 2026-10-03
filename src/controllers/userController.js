@@ -683,6 +683,47 @@ const getChatHistory = async (req, res) => {
     }
 };
 
+// Called when the app opens: if an admin has approved this customer as an astrologer, hand back a fresh
+// astrologer session so the app can show the approval message and switch to the astrologer screens.
+const getAccountStatus = async (req, res) => {
+    try {
+        await connectDB();
+        if (req.auth.roles.includes("ASTROLOGER") || !mongoose.isValidObjectId(req.auth.id)) {
+            return res.json({ success: true, data: { approved: false } });
+        }
+
+        const astrologer = await Astrologer.findOne({ $or: [{ accountId: req.auth.id }, { _id: req.auth.id }] })
+            .select("+email +notificationEmail +phoneNumber name roles accountId place dateOfBirth gender photo");
+        if (!astrologer || !normalizeRoles(astrologer.roles).includes("ASTROLOGER")) {
+            return res.json({ success: true, data: { approved: false } });
+        }
+
+        const roles = normalizeRoles(astrologer.roles);
+        const accountId = astrologer.accountId || astrologer._id;
+        return res.json({
+            success: true,
+            data: {
+                approved: true,
+                token: signAuthToken(accountId, roles, astrologer._id),
+                user: {
+                    id: String(accountId),
+                    name: astrologer.name,
+                    email: astrologer.email || astrologer.notificationEmail || "",
+                    phone: astrologer.phoneNumber || "",
+                    place: astrologer.place || "",
+                    dateOfBirth: astrologer.dateOfBirth || "",
+                    gender: astrologer.gender || "",
+                    photo: astrologer.photo || "",
+                    roles,
+                    astrologerId: String(astrologer._id)
+                }
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: "Unable to check account status" });
+    }
+};
+
 module.exports = {
     getAllUsers,
     createUser,
@@ -693,5 +734,6 @@ module.exports = {
     getUserById,
     chatResponse,
     getChatHistory,
+    getAccountStatus,
     googleLogin
 };

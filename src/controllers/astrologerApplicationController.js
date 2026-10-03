@@ -112,6 +112,10 @@ const moveApprovedApplicant = async (applicant, pricePerMinute) => {
     astrologer.sessionType = 'CHAT';
     astrologer.astrologerApplicationStatus = 'APPROVED';
     astrologer.userId = undefined;
+    if (!astrologer.astrologerId) {
+        const last = await Astrologer.findOne().sort({ astrologerId: -1 }).select('astrologerId').lean();
+        astrologer.astrologerId = (last?.astrologerId || 0) + 1;
+    }
     await astrologer.save();
 
     await Wallet.findOneAndUpdate(
