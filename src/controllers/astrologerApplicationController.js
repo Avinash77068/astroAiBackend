@@ -105,6 +105,7 @@ const moveApprovedApplicant = async (applicant, pricePerMinute) => {
     astrologer.dateOfBirth = applicant.dateOfBirth || '';
     astrologer.gender = applicant.gender || '';
     astrologer.photo = applicant.photo || '';
+    astrologer.image = applicant.photo || astrologer.image || '';
     astrologer.type = astrologer.type || 'Vedic Astrology';
     astrologer.price = `INR ${pricePerMinute}/min`;
     astrologer.status = 'OFFLINE';
