@@ -23,6 +23,7 @@ const listConversations = async (req, res) => {
                 $project: {
                     name: 1,
                     photo: 1,
+                    aiEnabled: { $in: [astrologerId, { $ifNull: ["$aiReplyEnabledAstrologerIds", []] }] },
                     messages: { $filter: { input: "$chat", as: "m", cond: { $eq: ["$$m.astrologerId", astrologerId] } } }
                 }
             },
@@ -30,6 +31,7 @@ const listConversations = async (req, res) => {
                 $project: {
                     name: 1,
                     photo: 1,
+                    aiEnabled: 1,
                     messageCount: { $size: "$messages" },
                     last: { $arrayElemAt: ["$messages", -1] }
                 }
@@ -43,6 +45,7 @@ const listConversations = async (req, res) => {
                 $project: {
                     name: 1,
                     photo: 1,
+                    aiEnabled: 1,
                     messageCount: 1,
                     // An AI reply counts as answered, so the conversation no longer needs the astrologer's reply.
                     lastMessage: { $cond: ["$answered", "$last.astroResponse", "$last.message"] },
