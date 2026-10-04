@@ -16,8 +16,8 @@ router.get("/:id", getUserById);
 router.post("/login", createUser);
 router.put("/:id", updateUser);
 router.delete("/:id", deleteUser);
-router.post("/chat", chatResponse);
-router.post("/chat-history", getChatHistory);
+router.post("/chat", authenticate, chatResponse);
+router.post("/chat-history", authenticate, getChatHistory);
 router.post("/google-login",googleLogin);
 
 module.exports = router;

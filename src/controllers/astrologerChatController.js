@@ -140,4 +140,71 @@ const replyToCustomer = async (req, res) => {
     }
 };
 
-module.exports = { listConversations, getConversation, replyToCustomer };
+const getConversationAiSettings = async (req, res) => {
+    try {
+        await connectDB();
+        const astrologerId = getAstrologerObjectId(req);
+        const { customerId } = req.params;
+        if (!astrologerId || !mongoose.isValidObjectId(customerId)) {
+            return res.status(400).json({ success: false, message: "Valid customer is required" });
+        }
+
+        const customer = await User.findOne({
+            _id: customerId,
+            "chat.astrologerId": astrologerId
+        }).select("aiReplyEnabledAstrologerIds").lean();
+        if (!customer) {
+            return res.status(403).json({ success: false, message: "This customer has not messaged you" });
+        }
+
+        const enabled = (customer.aiReplyEnabledAstrologerIds || []).some(
+            id => id.toString() === astrologerId.toString()
+        );
+        return res.json({
+            success: true,
+            data: { aiAvailable: true, enabled },
+            message: "Chat AI settings fetched successfully"
+        });
+    } catch (_error) {
+        return res.status(500).json({ success: false, message: "Unable to fetch chat AI settings" });
+    }
+};
+
+const updateConversationAiSettings = async (req, res) => {
+    try {
+        await connectDB();
+        const astrologerId = getAstrologerObjectId(req);
+        const { customerId } = req.params;
+        const { enabled } = req.body;
+        if (!astrologerId || !mongoose.isValidObjectId(customerId) || typeof enabled !== "boolean") {
+            return res.status(400).json({ success: false, message: "Valid customer and enabled setting are required" });
+        }
+
+        const update = enabled
+            ? { $addToSet: { aiReplyEnabledAstrologerIds: astrologerId } }
+            : { $pull: { aiReplyEnabledAstrologerIds: astrologerId } };
+        const result = await User.updateOne({
+            _id: customerId,
+            "chat.astrologerId": astrologerId
+        }, update);
+        if (!result.matchedCount) {
+            return res.status(403).json({ success: false, message: "This customer has not messaged you" });
+        }
+
+        return res.json({
+            success: true,
+            data: { aiAvailable: true, enabled },
+            message: "Chat AI settings updated successfully"
+        });
+    } catch (_error) {
+        return res.status(500).json({ success: false, message: "Unable to update chat AI settings" });
+    }
+};
+
+module.exports = {
+    listConversations,
+    getConversation,
+    replyToCustomer,
+    getConversationAiSettings,
+    updateConversationAiSettings
+};

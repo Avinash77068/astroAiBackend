@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema({
     isGoogleLogin: { type: Boolean, default: false },
     token: { type: String },
 
+    aiReplyEnabledAstrologerIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Astrologer" }],
     chat: [chatSchema],
 }, {
     timestamps: true

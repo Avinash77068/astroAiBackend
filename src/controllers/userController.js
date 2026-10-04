@@ -531,6 +531,9 @@ const chatResponse = async (req, res) => {
                 message: "userId, astrologerId, and message are required"
             });
         }
+        if (!req.auth?.id || String(req.auth.id) !== String(userId)) {
+            return res.status(403).json({ success: false, message: "You can only send messages from your own account" });
+        }
 
         if (!mongoose.isValidObjectId(astrologerId)) {
             return res.status(400).json({
@@ -558,9 +561,6 @@ const chatResponse = async (req, res) => {
                 message: "Astrologer not found"
             });
         }
-        // Astrologers with a real account reply themselves; only listed demo profiles get an AI reply.
-        const isHumanAstrologer = Boolean(astrologer.accountId);
-
         const userDetails = {
             name: user.name,
             dateOfBirth: user.dateOfBirth,
@@ -572,8 +572,13 @@ const chatResponse = async (req, res) => {
         const astrologerChat = user.chat.filter(
             chat => chat.astrologerId?.toString() === normalizedAstrologerId
         );
-        const generatedResponse = isHumanAstrologer ? null : await getAiChatResponse(message, astrologerChat, userDetails);
-        const astroResponse = isHumanAstrologer ? null : generatedResponse || "Sorry, Unable to Understand Your Query";
+        const aiEnabled = (user.aiReplyEnabledAstrologerIds || []).some(
+            id => id.toString() === normalizedAstrologerId
+        );
+        const generatedResponse = aiEnabled
+            ? await getAiChatResponse(message, astrologerChat, userDetails)
+            : null;
+        const astroResponse = generatedResponse || null;
         const chatEntry = {
             astrologerId: normalizedAstrologerId,
             message,
@@ -639,6 +644,9 @@ const getChatHistory = async (req, res) => {
                 success: false,
                 message: "userId and astrologerId are required"
             });
+        }
+        if (!req.auth?.id || String(req.auth.id) !== String(userId)) {
+            return res.status(403).json({ success: false, message: "You can only view your own chat history" });
         }
 
         if (!mongoose.isValidObjectId(astrologerId)) {
