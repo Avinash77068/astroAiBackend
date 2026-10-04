@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const { getAiChatResponse } = require("../middleware/AiChatResponse");
 const sendSMS = require("../middleware/services/twilioService");
 const { sendOtpEmail, sendAstrologerActivityEmail } = require("../middleware/services/emailService");
-const { ensureWallet } = require("../services/walletService");
+const { ensureWallet, chargeChatMessage } = require("../services/walletService");
 const { signAuthToken, normalizeRoles } = require("../services/authTokenService");
 const Notification = require("../model/notificationSchema");
 const OtpChallenge = require("../model/otpChallengeSchema");
@@ -568,6 +568,17 @@ const chatResponse = async (req, res) => {
             gender: user.gender,
             phoneNumber: user.phoneNumber
         };
+
+        const charged = await chargeChatMessage({
+            customerId: user._id,
+            astrologerAccountId: astrologer.accountId || astrologer._id
+        });
+        if (!charged) {
+            return res.status(402).json({
+                success: false,
+                message: "Insufficient wallet balance. Each message costs ₹0.10."
+            });
+        }
 
         const astrologerChat = user.chat.filter(
             chat => chat.astrologerId?.toString() === normalizedAstrologerId

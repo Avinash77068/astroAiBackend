@@ -35,14 +35,18 @@ const listConversations = async (req, res) => {
                 }
             },
             {
+                $addFields: {
+                    answered: { $gt: [{ $strLenCP: { $ifNull: ["$last.astroResponse", ""] } }, 0] }
+                }
+            },
+            {
                 $project: {
                     name: 1,
                     photo: 1,
                     messageCount: 1,
-                    lastMessage: {
-                        $cond: [{ $eq: ["$last.sender", "astrologer"] }, "$last.astroResponse", "$last.message"]
-                    },
-                    lastSender: "$last.sender",
+                    // An AI reply counts as answered, so the conversation no longer needs the astrologer's reply.
+                    lastMessage: { $cond: ["$answered", "$last.astroResponse", "$last.message"] },
+                    lastSender: { $cond: ["$answered", "astrologer", "$last.sender"] },
                     lastAt: "$last.timestamp"
                 }
             },

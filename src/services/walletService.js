@@ -44,4 +44,33 @@ const ensureAstrologerWelcomeBalance = async userId => {
     return fundedWallet;
 };
 
-module.exports = { ensureWallet, ensureAstrologerWelcomeBalance };
+const CHAT_MESSAGE_CHARGE_MINOR = 10;
+
+// Moves the per-message fee from the customer's wallet to the astrologer's. Returns false if the customer can't afford it.
+const chargeChatMessage = async ({ customerId, astrologerAccountId, amountMinor = CHAT_MESSAGE_CHARGE_MINOR }) => {
+    const customerWallet = await Wallet.findOneAndUpdate(
+        { userId: customerId, balanceMinor: { $gte: amountMinor } },
+        { $inc: { balanceMinor: -amountMinor } },
+        { new: true }
+    );
+    if (!customerWallet) return false;
+
+    try {
+        const astrologerWallet = await Wallet.findOneAndUpdate(
+            { userId: astrologerAccountId },
+            { $inc: { balanceMinor: amountMinor }, $setOnInsert: { userId: astrologerAccountId, currency: "INR" } },
+            { new: true, upsert: true }
+        );
+        const metadata = { reason: 'CHAT_MESSAGE', customerId: String(customerId), astrologerId: String(astrologerAccountId) };
+        await WalletTransaction.insertMany([
+            { userId: customerId, walletId: customerWallet._id, type: 'DEBIT', status: 'SUCCESS', amountMinor, description: 'Chat message charge', metadata },
+            { userId: astrologerAccountId, walletId: astrologerWallet._id, type: 'CREDIT', status: 'SUCCESS', amountMinor, description: 'Chat message earning', metadata }
+        ]);
+        return true;
+    } catch (error) {
+        await Wallet.updateOne({ _id: customerWallet._id }, { $inc: { balanceMinor: amountMinor } });
+        throw error;
+    }
+};
+
+module.exports = { ensureWallet, ensureAstrologerWelcomeBalance, chargeChatMessage, CHAT_MESSAGE_CHARGE_MINOR };
