@@ -1,13 +1,13 @@
 const axios = require('axios');
 
-const callOpenRouter = async (messages) => {
+const callOpenRouter = async (messages, { maxTokens = 500, timeoutMs = 30000 } = {}) => {
     const response = await axios.post(
         process.env.OPENROUTER_SITE_URL,
         {
             model: process.env.OPENROUTER_MODEL,
             messages: messages,
             temperature: 0.3,
-            max_tokens: 500
+            max_tokens: maxTokens
         },
         {
             headers: {
@@ -16,7 +16,7 @@ const callOpenRouter = async (messages) => {
                 'HTTP-Referer': 'https://astroai.app',
                 'X-Title': 'AstroAI'
             },
-            timeout: 30000
+            timeout: timeoutMs
         }
     );
 

@@ -1,14 +1,16 @@
 const buildUserContext = (userDetails) => {
     if (!userDetails) return '';
 
-    return `\n\nUser Information:
-- Name: ${userDetails?.name}
-- Date of Birth: ${userDetails?.dateOfBirth}
-- Place of Birth: ${userDetails?.place}
-- Gender: ${userDetails?.gender}
-- Phone: ${userDetails?.phoneNumber}
+    const details = [
+        userDetails.name && `name: ${userDetails.name}`,
+        userDetails.dateOfBirth && `birth date: ${userDetails.dateOfBirth}`,
+        userDetails.place && `birth place: ${userDetails.place}`,
+        userDetails.gender && `gender: ${userDetails.gender}`
+    ].filter(Boolean);
 
-Use this information to provide personalized astrological insights based on their birth details.`;
+    return details.length
+        ? `\nRelevant client details, if useful: ${details.join('; ')}.`
+        : '';
 };
 
 module.exports = { buildUserContext };

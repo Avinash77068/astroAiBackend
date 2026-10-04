@@ -3,8 +3,8 @@ const connectDB = require('../database/db');
 const User = require('../model/userSchema');
 const Astrologer = require('../model/astrologerSchema');
 const Notification = require('../model/notificationSchema');
-const Wallet = require('../model/walletSchema');
 const { normalizeRoles } = require('../services/authTokenService');
+const { ensureAstrologerWelcomeBalance } = require('../services/walletService');
 
 const listPendingApplications = async (_req, res) => {
     try {
@@ -118,11 +118,7 @@ const moveApprovedApplicant = async (applicant, pricePerMinute) => {
     }
     await astrologer.save();
 
-    await Wallet.findOneAndUpdate(
-        { userId: applicant._id },
-        { $setOnInsert: { userId: applicant._id, balanceMinor: 0, currency: 'INR' } },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    await ensureAstrologerWelcomeBalance(applicant._id);
     await Notification.updateMany(
         { recipientId: applicant._id, recipientRole: 'USER' },
         { $set: { recipientId: astrologer._id, recipientRole: 'ASTROLOGER' } }
