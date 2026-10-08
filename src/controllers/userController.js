@@ -581,7 +581,7 @@ const chatResponse = async (req, res) => {
         const aiEnabled = (user.aiReplyEnabledAstrologerIds || []).some(
             id => id.toString() === normalizedAstrologerId
         );
-        const generatedResponse = true
+        const generatedResponse = aiEnabled
             ? await getAiChatResponse(message, userDetails)
             : null;
         const astroResponse = generatedResponse || null;
