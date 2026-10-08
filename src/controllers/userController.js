@@ -561,14 +561,6 @@ const chatResponse = async (req, res) => {
                 message: "Astrologer not found"
             });
         }
-        const userDetails = {
-            name: user.name,
-            dateOfBirth: user.dateOfBirth,
-            place: user.place,
-            gender: user.gender,
-            phoneNumber: user.phoneNumber
-        };
-
         const charged = await chargeChatMessage({
             customerId: user._id,
             astrologerAccountId: astrologer.accountId || astrologer._id
@@ -580,14 +572,17 @@ const chatResponse = async (req, res) => {
             });
         }
 
-        const astrologerChat = user.chat.filter(
-            chat => chat.astrologerId?.toString() === normalizedAstrologerId
-        );
+        const userDetails = {
+            name: user.name,
+            dateOfBirth: user.dateOfBirth,
+            place: user.place,
+            gender: user.gender
+        };
         const aiEnabled = (user.aiReplyEnabledAstrologerIds || []).some(
             id => id.toString() === normalizedAstrologerId
         );
-        const generatedResponse = aiEnabled
-            ? await getAiChatResponse(message, astrologerChat, userDetails)
+        const generatedResponse = true
+            ? await getAiChatResponse(message, userDetails)
             : null;
         const astroResponse = generatedResponse || null;
         const chatEntry = {

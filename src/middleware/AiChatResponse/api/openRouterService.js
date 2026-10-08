@@ -7,7 +7,8 @@ const callOpenRouter = async (messages, { maxTokens = 500, timeoutMs = 30000 } =
             model: process.env.OPENROUTER_MODEL,
             messages: messages,
             temperature: 0.3,
-            max_tokens: maxTokens
+            max_tokens: maxTokens,
+            reasoning: { enabled: false, exclude: true }
         },
         {
             headers: {
