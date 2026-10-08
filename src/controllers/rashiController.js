@@ -3,6 +3,7 @@ const connectDB = require("../database/db.js");
 const Rashi = require("../model/rashiSchema.js");
 const AiFeature = require("../model/aiFeatureSchema.js");
 const User = require("../model/userSchema.js");
+const Horoscope = require("../model/horoscopeSchema.js");
 
 const getRashis = async (req, res) => {
     try {
@@ -36,6 +37,35 @@ const getRashiById = async (req, res) => {
         });
     } catch (error) {
         return res.status(500).json({ success: false, message: "Unable to load Rashi details" });
+    }
+};
+
+const getRashiHoroscope = async (req, res) => {
+    try {
+        await connectDB();
+        const period = req.query.period || "daily";
+        if (!["daily", "weekly", "monthly", "yearly"].includes(period)) {
+            return res.status(400).json({
+                success: false,
+                message: "period must be daily, weekly, monthly or yearly"
+            });
+        }
+
+        const horoscope = await Horoscope.findOne({ rashiId: req.params.id, period })
+            .sort({ updatedAt: -1 })
+            .select("-_id -__v -createdAt")
+            .lean();
+        if (!horoscope) {
+            return res.status(404).json({ success: false, message: "Horoscope not available yet" });
+        }
+
+        return res.json({
+            success: true,
+            data: horoscope,
+            message: "Horoscope fetched successfully"
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: "Unable to load horoscope" });
     }
 };
 
@@ -94,4 +124,4 @@ const askAboutRashi = async (req, res) => {
     }
 };
 
-module.exports = { getRashis, getRashiById, askAboutRashi };
+module.exports = { getRashis, getRashiById, getRashiHoroscope, askAboutRashi };

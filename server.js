@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const connectDB = require("./src/database/db.js");
 const setupRoutes = require("./src/routes/index.js");
+const startHoroscopeCron = require("./src/jobs/horoscopeCron.js");
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ app.use(express.urlencoded({ extended: true }));
 
 connectDB();
 setupRoutes(app);
+startHoroscopeCron();
 
 app.get("/health", (req, res) => {
     res.json({
