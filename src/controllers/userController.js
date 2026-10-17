@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const { getAiChatResponse } = require("../middleware/AiChatResponse");
 const sendSMS = require("../middleware/services/twilioService");
 const { sendOtpEmail, sendAstrologerActivityEmail } = require("../middleware/services/emailService");
+const env = require("../config/env");
 const { ensureWallet, chargeChatMessage } = require("../services/walletService");
 const { signAuthToken, normalizeRoles } = require("../services/authTokenService");
 const Notification = require("../model/notificationSchema");
@@ -73,6 +74,11 @@ const sendOTP = async (req, res) => {
             await OtpChallenge.deleteOne({ identifier, otpHash });
             throw error;
         }
+
+        console.log(
+            `✅ OTP sent via ${phoneNumber ? "SMS" : "email"} to ${phoneNumber || email.trim().toLowerCase()}` +
+            (env.IS_DEVELOPMENT ? ` (OTP: ${otp})` : "")
+        );
 
         res.status(200).json({
             success: true,
