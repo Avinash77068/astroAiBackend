@@ -1,48 +1,14 @@
-const axios = require('axios');
-const env = require("../config/env");
+const { callAi } = require('../middleware/AiChatResponse/api/aiClient');
 
 const callOpenRouterForKundli = async (messages) => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
     try {
-        const response = await axios.post(
-            env.OPENROUTER_SITE_URL,
-            {
-                model: env.OPENROUTER_MODEL,
-                messages: messages,
-                temperature: 0.4,
-                max_tokens: 800,
-                stream: false
-            },
-            {
-                headers: {
-                    'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
-                    'Content-Type': 'application/json',
-                    'HTTP-Referer': 'https://astroai.app',
-                    'X-Title': 'AstroAI Kundli'
-                },
-                signal: controller.signal,
-                timeout: 30000
-            }
-        );
-
-        clearTimeout(timeoutId);
-
-        const content = response?.data?.choices?.[0]?.message?.content;
-        if (!content || typeof content !== 'string') {
-            console.error('Unexpected OpenRouter response shape:', JSON.stringify(response?.data || {}).slice(0, 1000));
-            throw new Error('OPENROUTER_EMPTY_RESPONSE');
-        }
-
-        return content;
+        return await callAi(messages, { maxTokens: 800, timeoutMs: 30000, temperature: 0.4 });
     } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
+        if (error.code === 'ECONNABORTED') {
             console.error('Vedic Astrology API call timed out after 30 seconds');
             throw new Error('API_TIMEOUT');
         }
-        console.error('OpenRouter error details:', error.response?.data || error.message || error);
+        console.error('AI error details:', error.response?.data || error.message || error);
         throw error;
     }
 };

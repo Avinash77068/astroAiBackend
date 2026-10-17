@@ -49,7 +49,9 @@ const env = Object.freeze({
     TWILIO_AUTH_TOKEN: read("TWILIO_AUTH_TOKEN"),
     TWILIO_PHONE: read("TWILIO_PHONE"),
 
-    // AI (OpenRouter)
+    // AI (Gemini primary, OpenRouter fallback)
+    GEMINI_API_KEY: read("GEMINI_API_KEY"),
+    GEMINI_MODEL: read("GEMINI_MODEL") || "gemini-2.5-flash",
     OPENROUTER_API_KEY: read("OPENROUTER_API_KEY"),
     OPENROUTER_MODEL: read("OPENROUTER_MODEL"),
     OPENROUTER_SITE_URL: read("OPENROUTER_SITE_URL"),

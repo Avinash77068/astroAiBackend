@@ -1,36 +1,12 @@
 const SYSTEM_PROMPTS = require('../middleware/AiChatResponse/api/prompts');
-const env = require("../config/env");
+const { callAi } = require('../middleware/AiChatResponse/api/aiClient');
 
 const callOpenRouterForAnalysis = async (messages) => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
     try {
-        const response = await fetch(env.OPENROUTER_SITE_URL, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://astroai.app',
-                'X-Title': 'AstroAI Analysis'
-            },
-            body: JSON.stringify({
-                model: env.OPENROUTER_MODEL,
-                messages,
-                temperature: 0.3,
-                max_tokens: 450,
-                stream: false
-            }),
-            signal: controller.signal
-        });
-
-        const data = await response.json();
-        return data.choices[0].message.content;
+        return await callAi(messages, { maxTokens: 450, timeoutMs: 8000, temperature: 0.3 });
     } catch (error) {
-        if (error.name === 'AbortError') throw new Error('API_TIMEOUT');
+        if (error.code === 'ECONNABORTED') throw new Error('API_TIMEOUT');
         throw error;
-    } finally {
-        clearTimeout(timeoutId);
     }
 };
 

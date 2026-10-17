@@ -1,5 +1,5 @@
 const { buildUserContext } = require('./api/helpers');
-const { callOpenRouter } = require('./api/openRouterService');
+const { callAi } = require('./api/aiClient');
 
 const getAiChatResponse = async (userMessage, userDetails = null) => {
     try {
@@ -11,9 +11,9 @@ const getAiChatResponse = async (userMessage, userDetails = null) => {
             { role: 'user', content: userMessage }
         ];
 
-        return await callOpenRouter(messages, { maxTokens: 500, timeoutMs: 20000 });
+        return await callAi(messages, { maxTokens: 500, timeoutMs: 20000 });
     } catch (error) {
-        console.error('OpenRouter API Error:', error.response?.data || error.message);
+        console.error('AI API Error:', error.response?.data || error.message);
         return 'I apologize, but I’m having trouble connecting right now. Please try again in a moment.';
     }
 };
