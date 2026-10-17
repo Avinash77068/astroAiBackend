@@ -80,7 +80,8 @@ const appActionSchema = new mongoose.Schema(
     {
         show: { type: Boolean, default: false },
         buttonText: { type: String, required: true },
-        route: { type: String, default: "" }
+        route: { type: String, default: "" },
+        url: { type: String, default: "" }
     },
     { _id: false }
 );
@@ -101,6 +102,10 @@ const appConfigSchema = new mongoose.Schema(
         showFreeChatButton: {
             type: appActionSchema,
             default: () => ({ show: true, buttonText: "Chat with an astrologer", route: "/chat" })
+        },
+        showWebButton: {
+            type: appActionSchema,
+            default: () => ({ show: true, buttonText: "Connect on Web", url: "http://internboys.info/" })
         },
         constants: { type: Object, required: true }
     },

@@ -212,6 +212,11 @@ const buildHomepageData = () => ({
                 buttonText: "Chat with an astrologer",
                 route: "/chat"
             },
+            showWebButton: {
+                show: true,
+                buttonText: "Connect on Web",
+                url: "http://internboys.info/"
+            },
             constants: {
                 COLORS: {
                     "primary": "#EDB33E",
