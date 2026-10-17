@@ -9,7 +9,9 @@
     "seed": "node scripts/seed.js",
     "scrape:rashi": "node scripts/scrapeRashi.js",
     "seed:astrologers": "node scripts/seedAstrologers.js",
-    "migrate:multi-role": "node scripts/migrateMultiRoleAccount.js"
+    "migrate:multi-role": "node scripts/migrateMultiRoleAccount.js",
+    "grant:all": "node scripts/grantAllBalance.js"
+
   },
   "keywords": [
     "astrology",
