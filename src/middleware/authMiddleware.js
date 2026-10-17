@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { normalizeRoles } = require('../services/authTokenService');
+const env = require("../config/env");
 
 const authenticate = (req, res, next) => {
     const authorization = req.headers.authorization;
@@ -7,12 +8,12 @@ const authenticate = (req, res, next) => {
         return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
-    if (!process.env.JWT_SECRET) {
+    if (!env.JWT_SECRET) {
         return res.status(500).json({ success: false, message: 'Authentication is not configured' });
     }
 
     try {
-        const claims = jwt.verify(authorization.slice(7), process.env.JWT_SECRET);
+        const claims = jwt.verify(authorization.slice(7), env.JWT_SECRET);
         const legacyRole = typeof claims.role === 'string' ? claims.role : undefined;
         const roles = normalizeRoles(claims.roles || legacyRole);
         if (!claims.sub || !roles.some(role => ['USER', 'ASTROLOGER', 'ADMIN'].includes(role))) {

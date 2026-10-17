@@ -1,10 +1,11 @@
 const connectDB = require("../database/db.js");
 const { seedAll } = require("../services/seedService");
+const env = require("../config/env");
 
 // One call to (re)create every backend-driven collection: homepage/appConfig/sidebar, AI features, rashis, astrologers.
 const createAllData = async (req, res) => {
     try {
-        if (!process.env.MAIL_USER || req.body.adminMail !== process.env.MAIL_USER) {
+        if (!env.MAIL_USER || req.body.adminMail !== env.MAIL_USER) {
             return res.status(400).json({
                 success: false,
                 message: "You are not authorized to create app data 😔"

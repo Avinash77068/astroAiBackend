@@ -1,11 +1,7 @@
 const mongoose = require("mongoose");
-require("dotenv").config();
+const env = require("../config/env");
 
-const MONGO_URL = process.env.MONGO_URL;
-
-if (!MONGO_URL) {
-    throw new Error("❌ MONGO_URL not found in env");
-}
+const MONGO_URL = env.MONGO_URL;
 
 let cached = global.mongoose;
 

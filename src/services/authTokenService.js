@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const env = require("../config/env");
 
 const VALID_ROLES = ['USER', 'ASTROLOGER', 'ADMIN'];
 
@@ -11,7 +12,7 @@ const normalizeRoles = roles => {
 };
 
 const signAuthToken = (id, roles = ['USER'], astrologerId) => {
-    if (!process.env.JWT_SECRET) {
+    if (!env.JWT_SECRET) {
         throw new Error('JWT_SECRET is required to issue an authentication token');
     }
 
@@ -22,10 +23,10 @@ const signAuthToken = (id, roles = ['USER'], astrologerId) => {
             roles: normalizedRoles,
             ...(astrologerId ? { astrologerId: String(astrologerId) } : {})
         },
-        process.env.JWT_SECRET,
+        env.JWT_SECRET,
         {
             subject: String(id),
-            expiresIn: process.env.JWT_EXPIRE || '7d'
+            expiresIn: env.JWT_EXPIRE
         }
     );
 };

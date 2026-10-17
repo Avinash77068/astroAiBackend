@@ -1,13 +1,11 @@
 const express = require("express");
-const dotenv = require("dotenv");
 const connectDB = require("./src/database/db.js");
 const setupRoutes = require("./src/routes/index.js");
 const startHoroscopeCron = require("./src/jobs/horoscopeCron.js");
-
-dotenv.config();
+const env = require("./src/config/env");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = env.PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -34,7 +32,7 @@ app.use((err, req, res, next) => {
     res.status(500).json({
         success: false,
         message: "Internal server error",
-        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        error: env.NODE_ENV === 'development' ? err.message : undefined
     });
 });
 

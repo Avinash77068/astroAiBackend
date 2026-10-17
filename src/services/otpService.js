@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const env = require("../config/env");
 
 const getOtpIdentifier = ({ phoneNumber, email }) => {
     if (phoneNumber) return `phone:${String(phoneNumber).replace(/\s+/g, '')}`;
@@ -9,7 +10,7 @@ const getOtpIdentifier = ({ phoneNumber, email }) => {
 const generateOtp = () => String(crypto.randomInt(100000, 1000000));
 
 const hashOtp = otp => {
-    const secret = process.env.OTP_SECRET || process.env.JWT_SECRET;
+    const secret = env.OTP_SECRET;
     if (!secret) throw new Error('OTP_SECRET or JWT_SECRET must be configured');
     return crypto.createHmac('sha256', secret).update(String(otp)).digest('hex');
 };

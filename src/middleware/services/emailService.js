@@ -1,11 +1,12 @@
 const axios = require('axios');
+const env = require("../../config/env");
 const {
     otpTemplate,
     passwordResetTemplate,
     astrologerActivityTemplate
 } = require('./emailTemplates');
 
-const MAIL_TIMEOUT_MS = Number(process.env.MAIL_TIMEOUT_MS) || 30000;
+const MAIL_TIMEOUT_MS = env.MAIL_TIMEOUT_MS;
 
 const withTimeout = (promise, timeoutMs = MAIL_TIMEOUT_MS) => {
     let timer;
@@ -18,16 +19,16 @@ const withTimeout = (promise, timeoutMs = MAIL_TIMEOUT_MS) => {
 };
 
 const parseFrom = () => {
-    const raw = process.env.EMAIL_FROM || 'no-reply@astroai.app';
+    const raw = env.EMAIL_FROM;
     const match = raw.match(/^\s*(.*?)\s*<\s*([^>]+)\s*>\s*$/);
     return {
-        name: process.env.EMAIL_FROM_NAME || 'AstroAI',
+        name: env.EMAIL_FROM_NAME,
         email: match ? match[2].trim() : raw.trim()
     };
 };
 
 const send = async ({ to, name, subject, html, label = 'email' }) => {
-    if (!process.env.BREVO_API_KEY) {
+    if (!env.BREVO_API_KEY) {
         throw new Error('Missing BREVO_API_KEY in environment; cannot send email');
     }
     if (typeof to !== 'string' || !to.trim()) {
@@ -45,7 +46,7 @@ const send = async ({ to, name, subject, html, label = 'email' }) => {
             },
             {
                 headers: {
-                    'api-key': process.env.BREVO_API_KEY,
+                    'api-key': env.BREVO_API_KEY,
                     'Content-Type': 'application/json',
                     accept: 'application/json'
                 },

@@ -1,4 +1,5 @@
 const axios = require('axios');
+const env = require("../config/env");
 
 const callOpenRouterForKundli = async (messages) => {
     const controller = new AbortController();
@@ -6,9 +7,9 @@ const callOpenRouterForKundli = async (messages) => {
 
     try {
         const response = await axios.post(
-            process.env.OPENROUTER_SITE_URL,
+            env.OPENROUTER_SITE_URL,
             {
-                model: process.env.OPENROUTER_MODEL,
+                model: env.OPENROUTER_MODEL,
                 messages: messages,
                 temperature: 0.4,
                 max_tokens: 800,
@@ -16,7 +17,7 @@ const callOpenRouterForKundli = async (messages) => {
             },
             {
                 headers: {
-                    'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                    'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
                     'Content-Type': 'application/json',
                     'HTTP-Referer': 'https://astroai.app',
                     'X-Title': 'AstroAI Kundli'

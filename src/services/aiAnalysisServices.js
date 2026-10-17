@@ -1,20 +1,21 @@
 const SYSTEM_PROMPTS = require('../middleware/AiChatResponse/api/prompts');
+const env = require("../config/env");
 
 const callOpenRouterForAnalysis = async (messages) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     try {
-        const response = await fetch(process.env.OPENROUTER_SITE_URL, {
+        const response = await fetch(env.OPENROUTER_SITE_URL, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
                 'Content-Type': 'application/json',
                 'HTTP-Referer': 'https://astroai.app',
                 'X-Title': 'AstroAI Analysis'
             },
             body: JSON.stringify({
-                model: process.env.OPENROUTER_MODEL,
+                model: env.OPENROUTER_MODEL,
                 messages,
                 temperature: 0.3,
                 max_tokens: 450,

@@ -10,8 +10,6 @@ const Notification = require("../model/notificationSchema");
 const OtpChallenge = require("../model/otpChallengeSchema");
 const { getOtpIdentifier, generateOtp, hashOtp, otpMatches } = require("../services/otpService");
 const connectDB = require("../database/db.js");
-const dotenv = require("dotenv");
-dotenv.config();
 
 const consumeOtpChallenge = async (res, storedData) => {
     const consumedChallenge = await OtpChallenge.findOneAndDelete({

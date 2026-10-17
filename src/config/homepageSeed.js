@@ -1,4 +1,5 @@
 const defaultSidebarItems = require("./sidebarMenu.js");
+const env = require("./env");
 
 // Default homepage document. Used by the one-shot setup API to (re)create the Homepage collection.
 const buildHomepageData = () => ({
@@ -197,7 +198,7 @@ const buildHomepageData = () => ({
             appDescription: "Your AI-powered astrological companion",
             logo: "", // empty = the app uses its bundled logo
             notificationCount: "6",
-            webClientId: process.env.WEB_CLIENT_ID || "693439184836-s3rn40uaml3bfq2bdpteb53p8de38ji7.apps.googleusercontent.com",
+            webClientId: env.WEB_CLIENT_ID,
             userProfile: {
                 name: "Guest",
                 plan: "Basic"

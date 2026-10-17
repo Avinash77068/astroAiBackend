@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('../src/config/env');
 
 const connectDB = require('../src/database/db');
 const User = require('../src/model/userSchema');

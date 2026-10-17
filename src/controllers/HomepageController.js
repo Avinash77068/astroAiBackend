@@ -1,8 +1,7 @@
 const connectDB = require("../database/db.js");
 const Home = require("../model/HomepageSchema");
-const dotenv = require("dotenv");
 const buildHomepageData = require("../config/homepageSeed.js");
-dotenv.config();
+const env = require("../config/env");
 
 const getHomepageData = async (req, res) => {
     try {
@@ -33,7 +32,7 @@ const getHomepageData = async (req, res) => {
 const createHomepageData = async (req, res) => {
     try {
         const { adminMail } = req.body;
-        if (adminMail !== process.env.MAIL_USER) {
+        if (adminMail !== env.MAIL_USER) {
             return res.status(400).json({
                 success: false,
                 message: "You are not authorized to create home data 😔"
