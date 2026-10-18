@@ -57,17 +57,30 @@ const askAiFeature = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
+        // Only fields defined for this feature, only non-blank strings. Blank optional fields are left out.
+        const rawDetails = req.body.details && typeof req.body.details === "object" ? req.body.details : {};
+        const details = {};
+        const detailLines = [];
+        for (const field of feature.fields) {
+            if (field.name === "question") continue;
+            const value = typeof rawDetails[field.name] === "string" ? rawDetails[field.name].trim().slice(0, 200) : "";
+            if (!value) continue;
+            details[field.name] = value;
+            detailLines.push(`${field.label.replace(/\s*\(.*?\)\s*$/, "")}: ${value}`);
+        }
+
         const prompt = [
             `The user chose the ${feature.title} guidance category.`,
             "Respond in Hindi with compassionate, practical, non-deterministic astrology guidance.",
             "Treat astrology as traditional guidance, not a guaranteed prediction.",
+            ...(detailLines.length ? ["Details the user shared (use only these, do not assume anything else):", ...detailLines] : []),
             `User's question: ${question}`
         ].join("\n");
-        const answer = await getAiChatResponse(prompt);
+        const answer = await getAiChatResponse(prompt, null, { category: feature.id });
         await AiFeature.create({
             userId: String(userId),
             featureType: feature.id,
-            input: { question },
+            input: { question, details },
             output: answer
         });
 

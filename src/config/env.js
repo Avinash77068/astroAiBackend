@@ -51,7 +51,7 @@ const env = Object.freeze({
 
     // AI (Gemini primary, OpenRouter fallback)
     GEMINI_API_KEY: read("GEMINI_API_KEY"),
-    GEMINI_MODEL: read("GEMINI_MODEL") || "gemini-3.8-flash",
+    GEMINI_MODEL: read("GEMINI_MODEL") || "gemini-3.1-flash-lite",
     OPENROUTER_API_KEY: read("OPENROUTER_API_KEY"),
     OPENROUTER_MODEL: read("OPENROUTER_MODEL"),
     OPENROUTER_SITE_URL: read("OPENROUTER_SITE_URL"),
